@@ -252,12 +252,12 @@ namespace lesson1
             return clubs;
         }
 
-        public static IEnumerable<IEnumerable<T>> SplitIntoSets<T>(IEnumerable<T> source, int itemsPerSet)
+        public static IEnumerable<List<T>> SplitIntoSets<T>(IEnumerable<T> source, int itemsPerSet)
         {
             var sourceList = source as List<T> ?? source.ToList();
             for (var index = 0; index < sourceList.Count; index += itemsPerSet)
             {
-                yield return sourceList.Skip(index).Take(itemsPerSet);
+                yield return sourceList.Skip(index).Take(itemsPerSet).ToList();
             }
         }
 
@@ -282,11 +282,11 @@ namespace lesson1
 
                 var clubsId = GetClubsIdInLeague(compId);
                 int LEN = 10;
-                var subClubs = SplitIntoSets(clubsId, LEN);
+                var subClubs = SplitIntoSets(clubsId, LEN).ToList();
                 Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[subClubs.Count()];
                 for (int i = 0; i < tasks.Length; i++)
                 {
-                    tasks[i] = new Task<List<FootballClub>>(() => FindPartOfClubs(subClubs.ToList()[i].ToList(), compId, taskId, i));
+                    tasks[i] = new Task<List<FootballClub>>(() => FindPartOfClubs(subClubs[i], compId, taskId, i));
                     tasks[i].Start();
                     Thread.Sleep(1500);
                 }
@@ -318,11 +318,11 @@ namespace lesson1
             {
                 var playersId = GetPlayersIdInClub(clubId);
                 int LEN = 10;
-                var subPlayers = SplitIntoSets(playersId, LEN);
+                var subPlayers = SplitIntoSets(playersId, LEN).ToList();
                 Task<List<Player>>[] tasks = new Task<List<Player>>[subPlayers.Count()];
                 for (int i = 0; i < tasks.Length; i++)
                 {
-                    tasks[i] = new Task<List<Player>>(() => FindPartOfPlayers(subPlayers.ToList()[i].ToList(), clubId, taskId, i));
+                    tasks[i] = new Task<List<Player>>(() => FindPartOfPlayers(subPlayers[i], clubId, taskId, i));
                     tasks[i].Start();
                     Thread.Sleep(1500);
                 }
@@ -359,11 +359,11 @@ namespace lesson1
         {
             var clubsList = new List<FootballClub>();
             int LEN = 10;
-            var subComps = SplitIntoSets(compsId, LEN);
+            var subComps = SplitIntoSets(compsId, LEN).ToList();
             Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[subComps.Count()];
             for (int i = 0; i < tasks.Length; i++)
             {
-                tasks[i] = new Task<List<FootballClub>>(() => FindClubs(subComps.ToList()[i].ToList(), i));
+                tasks[i] = new Task<List<FootballClub>>(() => FindClubs(subComps[i], i));
                 tasks[i].Start();
                 Thread.Sleep(1500);
             }
@@ -393,11 +393,11 @@ namespace lesson1
             }
             var playersList = new List<Player>();
             int LEN = 10;
-            var subClubs = SplitIntoSets(clubsId, LEN);
+            var subClubs = SplitIntoSets(clubsId, LEN).ToList();
             var tasks = new Task<List<Player>>[subClubs.Count()];
             for (int i = 0; i < tasks.Length; i++)
             {
-                tasks[i] = new Task<List<Player>>(() => FindPlayers(subClubs.ToList()[i].ToList(), i));
+                tasks[i] = new Task<List<Player>>(() => FindPlayers(subClubs[i], i));
                 tasks[i].Start();
                 Thread.Sleep(1500);
             }
