@@ -251,6 +251,16 @@ namespace lesson1
             }
             return clubs;
         }
+
+        public static IEnumerable<IEnumerable<T>> SplitIntoSets<T>(IEnumerable<T> source, int itemsPerSet)
+        {
+            var sourceList = source as List<T> ?? source.ToList();
+            for (var index = 0; index < sourceList.Count; index += itemsPerSet)
+            {
+                yield return sourceList.Skip(index).Take(itemsPerSet);
+            }
+        }
+
         //Асинхронный
         private static List<FootballClub> FindPartOfClubs(List<string> clubsId, string compId, int taskId, int subTaskId)
         {
@@ -271,11 +281,12 @@ namespace lesson1
             {
 
                 var clubsId = GetClubsIdInLeague(compId);
-                Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[clubsId.Count / 40];
+                int LEN = 10;
+                var subClubs = SplitIntoSets(clubsId, LEN);
+                Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[subClubs.Count()];
                 for (int i = 0; i < tasks.Length; i++)
                 {
-                    var subClubs = clubsId.GetRange(i * clubsId.Count / tasks.Length, clubsId.Count / tasks.Length);
-                    tasks[i] = new Task<List<FootballClub>>(() => FindPartOfClubs(subClubs, compId, taskId, i));
+                    tasks[i] = new Task<List<FootballClub>>(() => FindPartOfClubs(subClubs.ToList()[i].ToList(), compId, taskId, i));
                     tasks[i].Start();
                     Thread.Sleep(1500);
                 }
@@ -287,7 +298,7 @@ namespace lesson1
             }
             return clubsList;
         }
-
+        //Асинхронный
         private static List<Player> FindPartOfPlayers(List<string> playersId, string clubId, int taskId, int subTaskId)
         {
             var playerList = new List<Player>();
@@ -299,17 +310,19 @@ namespace lesson1
             }
             return playerList;
         }
+        //Асинхронный
         private static List<Player> FindPlayers(List<string> clubsId, int taskId)
         {
             var playersList = new List<Player>();
             foreach (var clubId in clubsId)
             {
                 var playersId = GetPlayersIdInClub(clubId);
-                Task<List<Player>>[] tasks = new Task<List<Player>>[playersId.Count / 20];
+                int LEN = 10;
+                var subPlayers = SplitIntoSets(playersId, LEN);
+                Task<List<Player>>[] tasks = new Task<List<Player>>[subPlayers.Count()];
                 for (int i = 0; i < tasks.Length; i++)
                 {
-                    var subPlayers = playersId.GetRange(i * playersId.Count / tasks.Length, playersId.Count / tasks.Length);
-                    tasks[i] = new Task<List<Player>>(() => FindPartOfPlayers(subPlayers, clubId, taskId, i));
+                    tasks[i] = new Task<List<Player>>(() => FindPartOfPlayers(subPlayers.ToList()[i].ToList(), clubId, taskId, i));
                     tasks[i].Start();
                     Thread.Sleep(1500);
                 }
@@ -345,11 +358,12 @@ namespace lesson1
         private static void SaveClubsInBD(List<string> compsId)
         {
             var clubsList = new List<FootballClub>();
-            Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[compsId.Count / 12];
+            int LEN = 10;
+            var subComps = SplitIntoSets(compsId, LEN);
+            Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[subComps.Count()];
             for (int i = 0; i < tasks.Length; i++)
             {
-                var subComps = compsId.GetRange(i * compsId.Count / tasks.Length, compsId.Count / tasks.Length);
-                tasks[i] = new Task<List<FootballClub>>(() => FindClubs(subComps, i));
+                tasks[i] = new Task<List<FootballClub>>(() => FindClubs(subComps.ToList()[i].ToList(), i));
                 tasks[i].Start();
                 Thread.Sleep(1500);
             }
@@ -372,17 +386,18 @@ namespace lesson1
 
         private static void SavePlayersInBD(List<string> compsId)
         {
-            var clubs = new List<string>();
+            var clubsId = new List<string>();
             foreach (var compId in compsId)
             {
-                clubs.AddRange(GetClubsIdInLeague(compId));
+                clubsId.AddRange(GetClubsIdInLeague(compId));
             }
             var playersList = new List<Player>();
-            var tasks = new Task<List<Player>>[clubs.Count / 4];
+            int LEN = 10;
+            var subClubs = SplitIntoSets(clubsId, LEN);
+            var tasks = new Task<List<Player>>[subClubs.Count()];
             for (int i = 0; i < tasks.Length; i++)
             {
-                var subClubs = clubs.GetRange(i * clubs.Count / tasks.Length, clubs.Count / tasks.Length);
-                tasks[i] = new Task<List<Player>>(() => FindPlayers(subClubs, i));
+                tasks[i] = new Task<List<Player>>(() => FindPlayers(subClubs.ToList()[i].ToList(), i));
                 tasks[i].Start();
                 Thread.Sleep(1500);
             }
