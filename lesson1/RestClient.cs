@@ -20,9 +20,9 @@ namespace lesson1
         public async Task<string> GetStringAsync(string uri)
         {
             var result = await client.GetAsync(uri);
-            for(int i = 0; i < 50 && !result.IsSuccessStatusCode; i++)
+            for(int i = 0; i < 500 && !result.IsSuccessStatusCode; i++)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(i*1000);
                 result = await client.GetAsync(uri);
                 if (result.IsSuccessStatusCode) 
                     break;

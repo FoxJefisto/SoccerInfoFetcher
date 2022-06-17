@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -190,7 +192,6 @@ namespace lesson1
                 Id = playerId,
                 FirstName = firstName,
                 LastName = lastName,
-                ClubId = clubId,
                 Number = numberInClub,
                 Position = position,
                 DateOfBirth = dateOfBirth,
@@ -281,16 +282,23 @@ namespace lesson1
             {
 
                 var clubsId = GetClubsIdInLeague(compId);
-                int LEN = 10;
+                int LEN = 8;
                 var subClubs = SplitIntoSets(clubsId, LEN).ToList();
                 Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[subClubs.Count()];
                 for (int i = 0; i < tasks.Length; i++)
                 {
                     tasks[i] = new Task<List<FootballClub>>(() => FindPartOfClubs(subClubs[i], compId, taskId, i));
                     tasks[i].Start();
-                    Thread.Sleep(1500);
+                    Thread.Sleep(2000);
                 }
-                Task.WaitAll(tasks);
+                try
+                {
+                    Task.WaitAll(tasks);
+                }
+                catch (System.AggregateException)
+                {
+
+                }
                 for (int i = 0; i < tasks.Length; i++)
                 {
                     clubsList.AddRange(tasks[i].Result);
@@ -317,16 +325,23 @@ namespace lesson1
             foreach (var clubId in clubsId)
             {
                 var playersId = GetPlayersIdInClub(clubId);
-                int LEN = 10;
+                int LEN = 8;
                 var subPlayers = SplitIntoSets(playersId, LEN).ToList();
                 Task<List<Player>>[] tasks = new Task<List<Player>>[subPlayers.Count()];
                 for (int i = 0; i < tasks.Length; i++)
                 {
                     tasks[i] = new Task<List<Player>>(() => FindPartOfPlayers(subPlayers[i], clubId, taskId, i));
                     tasks[i].Start();
-                    Thread.Sleep(1500);
+                    Thread.Sleep(2000);
                 }
-                Task.WaitAll(tasks);
+                try
+                {
+                    Task.WaitAll(tasks);
+                }
+                catch (System.AggregateException)
+                {
+
+                }
                 for (int i = 0; i < tasks.Length; i++)
                 {
                     playersList.AddRange(tasks[i].Result);
@@ -338,7 +353,7 @@ namespace lesson1
         public static List<string> GetMainCompsId(int page = 1)
         {
             var compsId = new List<string>();
-            if (page == 6) return compsId;
+            if (page == 2) return compsId;
             string htmlCode = GetHTMLInfo(null, SearchScope.data, "index.php?c=competitions&a=champs_list_data&tp=0&cn_id=0&st=0&ttl=&p=", page.ToString());
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(htmlCode);
@@ -358,16 +373,23 @@ namespace lesson1
         private static void SaveClubsInBD(List<string> compsId)
         {
             var clubsList = new List<FootballClub>();
-            int LEN = 10;
+            int LEN = 8;
             var subComps = SplitIntoSets(compsId, LEN).ToList();
             Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[subComps.Count()];
             for (int i = 0; i < tasks.Length; i++)
             {
                 tasks[i] = new Task<List<FootballClub>>(() => FindClubs(subComps[i], i));
                 tasks[i].Start();
-                Thread.Sleep(1500);
+                Thread.Sleep(2000);
             }
-            Task.WaitAll(tasks);
+            try
+            {
+                Task.WaitAll(tasks);
+            }
+            catch (System.AggregateException)
+            {
+
+            }
             Console.WriteLine("Обработка результатов");
             for (int i = 0; i < tasks.Length; i++)
             {
@@ -382,47 +404,60 @@ namespace lesson1
             }
         }
 
-
-
-        private static void SavePlayersInBD(List<string> compsId)
+        private static void SavePlayersInBD(List<string> clubsId)
         {
-            var clubsId = new List<string>();
-            foreach (var compId in compsId)
-            {
-                clubsId.AddRange(GetClubsIdInLeague(compId));
-            }
             var playersList = new List<Player>();
-            int LEN = 10;
+            int LEN = 200;
             var subClubs = SplitIntoSets(clubsId, LEN).ToList();
             var tasks = new Task<List<Player>>[subClubs.Count()];
             for (int i = 0; i < tasks.Length; i++)
             {
                 tasks[i] = new Task<List<Player>>(() => FindPlayers(subClubs[i], i));
                 tasks[i].Start();
-                Thread.Sleep(1500);
+                Thread.Sleep(2000);
             }
-            Task.WaitAll(tasks);
-            Console.WriteLine("Обработка результатов");
-            for (int i = 0; i < tasks.Length; i++)
+            try
             {
-                playersList.AddRange(tasks[i].Result);
+                Task.WaitAll(tasks);
             }
-            Console.WriteLine("Фильтрация данных");
-            var players = playersList.GroupBy(x => x.Id).Select(g => g.First());
+            catch(System.AggregateException)
+            {
+
+            }
+            Console.WriteLine("Занесение резуль");
             using (AppContext db = new AppContext())
             {
-                db.Players.AddRange(players);
-                db.SaveChanges();
+                for (int i = 0; i < tasks.Length; i++)
+                {
+                    db.Players.AddRange(tasks[i].Result);
+                    db.SaveChanges();
+                }
             }
         }
 
 
         static void Main(string[] args)
         {
-            //var comps = GetMainCompsId();
-            var comps = new List<string> { "12","13" };
-            SaveClubsInBD(comps);
-            SavePlayersInBD(comps);
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            //var compsId = GetMainCompsId();
+            var compsId = new List<string> { "12" };
+            SaveClubsInBD(compsId);
+            var clubsId = new List<string>();
+            foreach (var compId in compsId)
+            {
+                clubsId.AddRange(GetClubsIdInLeague(compId));
+            }
+            Console.WriteLine($"Количество клубов: {clubsId.Count}");
+            var clubsDistinctId = clubsId.Distinct().ToList();
+            Console.WriteLine($"Количество разных клубов: {clubsDistinctId.Count}");
+            SavePlayersInBD(clubsDistinctId);
+            stopwatch.Stop();
+            TimeSpan ts = stopwatch.Elapsed;
+            string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                ts.Hours, ts.Minutes, ts.Seconds,
+                ts.Milliseconds / 10);
+            Console.WriteLine($"Время работы: { elapsedTime}");
         }
     }
 
@@ -448,9 +483,10 @@ namespace lesson1
         public string LastName { get; set; }
         public string ClubId { get; set; }
         [ForeignKey("ClubId")]
-        public FootballClub Club { get; set; }
+        public List<FootballClub> Clubs { get; set; }
         public int? Number { get; set; }
         public string Position { get; set; }
+        [Column(TypeName = "date")]
         public DateTime? DateOfBirth { get; set; }
         public string WorkingLeg { get; set; }
         public int? Height { get; set; }

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using lesson1;
 
 namespace lesson1.Migrations
 {
     [DbContext(typeof(AppContext))]
-    partial class AppContextModelSnapshot : ModelSnapshot
+    [Migration("20220616214101_Triple")]
+    partial class Triple
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -19,19 +21,34 @@ namespace lesson1.Migrations
                 .HasAnnotation("ProductVersion", "5.0.17")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("FootballClubPlayer", b =>
+            modelBuilder.Entity("FootballClubPlayerClub", b =>
                 {
-                    b.Property<string>("ClubsId")
+                    b.Property<string>("ClubId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("PlayersId")
+                    b.Property<string>("PlayerClubPlayerId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("ClubsId", "PlayersId");
+                    b.HasKey("ClubId", "PlayerClubPlayerId");
 
-                    b.HasIndex("PlayersId");
+                    b.HasIndex("PlayerClubPlayerId");
 
-                    b.ToTable("FootballClubPlayer");
+                    b.ToTable("FootballClubPlayerClub");
+                });
+
+            modelBuilder.Entity("PlayerPlayerClub", b =>
+                {
+                    b.Property<string>("PlayerClubPlayerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PlayerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("PlayerClubPlayerId", "PlayerId");
+
+                    b.HasIndex("PlayerId");
+
+                    b.ToTable("PlayerPlayerClub");
                 });
 
             modelBuilder.Entity("lesson1.FootballClub", b =>
@@ -117,17 +134,45 @@ namespace lesson1.Migrations
                     b.ToTable("Players");
                 });
 
-            modelBuilder.Entity("FootballClubPlayer", b =>
+            modelBuilder.Entity("lesson1.PlayerClub", b =>
+                {
+                    b.Property<string>("PlayerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ClubId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("PlayerId");
+
+                    b.ToTable("PlayerClub");
+                });
+
+            modelBuilder.Entity("FootballClubPlayerClub", b =>
                 {
                     b.HasOne("lesson1.FootballClub", null)
                         .WithMany()
-                        .HasForeignKey("ClubsId")
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("lesson1.PlayerClub", null)
+                        .WithMany()
+                        .HasForeignKey("PlayerClubPlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PlayerPlayerClub", b =>
+                {
+                    b.HasOne("lesson1.PlayerClub", null)
+                        .WithMany()
+                        .HasForeignKey("PlayerClubPlayerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("lesson1.Player", null)
                         .WithMany()
-                        .HasForeignKey("PlayersId")
+                        .HasForeignKey("PlayerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
