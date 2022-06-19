@@ -1,10 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -17,7 +21,7 @@ namespace lesson1
     {
 
         public static RestClient restClient = new RestClient();
-        private enum SearchScope
+        public enum SearchScope
         {
             coaches,
             players,
@@ -26,7 +30,7 @@ namespace lesson1
             competitions,
             data
         }
-        private static FootballClub GetClubInfo(string htmlCode, string clubId)
+        public static FootballClub GetClubInfo(string htmlCode, string clubId)
         {
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(htmlCode);
@@ -87,8 +91,19 @@ namespace lesson1
                         }
                     }
                 }
-                club = new FootballClub { Id = clubId, Name = name, NameEnglish = englishName, FullName = fullName, MainCoach = mainCoach, 
-                    Stadium = stadium, City = city, Country = country, FoundationDate = foundationDate, Rating = rating };
+                club = new FootballClub
+                {
+                    Id = clubId,
+                    Name = name,
+                    NameEnglish = englishName,
+                    FullName = fullName,
+                    MainCoach = mainCoach,
+                    Stadium = stadium,
+                    City = city,
+                    Country = country,
+                    FoundationDate = foundationDate,
+                    Rating = rating
+                };
             }
             return club;
         }
@@ -110,6 +125,11 @@ namespace lesson1
                 }
             }
             return playersId;
+        }
+
+        public static async Task<List<string>> GetPlayersIdInClubAsync(string clubId)
+        {
+            return await Task.Run(() => GetPlayersIdInClub(clubId));
         }
 
         public static Player GetPlayerInfo(string htmlCode, string playerId)
@@ -139,18 +159,6 @@ namespace lesson1
                     {
                         case "Полное имя":
                             fullName = value;
-                            break;
-                        case "Клуб":
-                            {
-                                Match matchId = Regex.Match(row.OuterHtml, @"clubs/([^/]+)");
-                                clubId = matchId.Groups[1].Value;
-                            }
-                            break;
-                        case "В аренде":
-                            {
-                                Match matchId = Regex.Match(row.OuterHtml, @"clubs/([^/]+)/"">([^<]+)");
-                                clubId = matchId.Groups[1].Value;
-                            }
                             break;
                         case "Номер в клубе":
                             numberInClub = int.Parse(value);
@@ -188,19 +196,21 @@ namespace lesson1
                             break;
                     }
                 }
-                player = new Player {
-                Id = playerId,
-                FirstName = firstName,
-                LastName = lastName,
-                Number = numberInClub,
-                Position = position,
-                DateOfBirth = dateOfBirth,
-                WorkingLeg = workingLeg,
-                Height = height,
-                Weight = weight,
-                OriginalName = fullName,
-                Citizenship = citizenship,
-                PlaceOfBirth = placeOfBirth};
+                player = new Player
+                {
+                    Id = playerId,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Number = numberInClub,
+                    Position = position,
+                    DateOfBirth = dateOfBirth,
+                    WorkingLeg = workingLeg,
+                    Height = height,
+                    Weight = weight,
+                    OriginalName = fullName,
+                    Citizenship = citizenship,
+                    PlaceOfBirth = placeOfBirth
+                };
             }
             return player;
         }
@@ -215,7 +225,15 @@ namespace lesson1
             string htmlCode = GetHTMLInfo(clubId, SearchScope.clubs);
             return GetClubInfo(htmlCode, clubId);
         }
-        private static string GetHTMLInfo(string id, SearchScope scope, string data1 = null, string data2 = null)
+        public static async Task<Player> GetPlayerInfoByIdAsync(string playerId)
+        {
+            return await Task.Run(() => GetPlayerInfoById(playerId));
+        }
+        public static async Task<FootballClub> GetClubInfoByIdAsync(string clubId)
+        {
+            return await Task.Run(() => GetClubInfoById(clubId));
+        }
+        public static string GetHTMLInfo(string id, SearchScope scope, string data1 = null, string data2 = null)
         {
             string address;
             if (scope == SearchScope.data)
@@ -234,7 +252,7 @@ namespace lesson1
 
             return restClient.GetStringAsync(address).Result;
         }
-        private static List<string> GetClubsIdInLeague(string value)
+        public static List<string> GetClubsIdInLeague(string value)
         {
             string htmlCode = GetHTMLInfo(value, SearchScope.competitions, "teams/");
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
@@ -253,101 +271,151 @@ namespace lesson1
             return clubs;
         }
 
-        public static IEnumerable<List<T>> SplitIntoSets<T>(IEnumerable<T> source, int itemsPerSet)
+        public static (Competition comp, List<string> seasonsYear) GetCompetitionInfo(string compId)
         {
-            var sourceList = source as List<T> ?? source.ToList();
-            for (var index = 0; index < sourceList.Count; index += itemsPerSet)
+            string htmlCode = GetHTMLInfo(compId, SearchScope.competitions);
+            var doc = new HtmlAgilityPack.HtmlDocument();
+            doc.LoadHtml(htmlCode);
+            string compName = doc.DocumentNode.SelectSingleNode(".//h1[@class='profile_info_title red']").InnerText;
+            var nodesInfo = doc.DocumentNode.SelectNodes(".//table[@class='profile_params']/tbody/tr");
+            string compCountry = null;
+            foreach (var nodeInfo in nodesInfo)
             {
-                yield return sourceList.Skip(index).Take(itemsPerSet).ToList();
+                if (nodeInfo.SelectSingleNode(".//td").InnerText == "Страна")
+                {
+                    compCountry = nodeInfo.SelectSingleNode(".//span").InnerText;
+                }
             }
+            var comp = new Competition
+            {
+                Id = compId,
+                Name = compName,
+                Country = compCountry
+            };
+            var nodesSelectbox = doc.DocumentNode.SelectSingleNode(".//div[@class='breadcrumb']").SelectNodes(".//div[@class='selectbox-menu']/a");
+            var seasonsYear = new List<string>();
+            foreach (var nodeSelectBox in nodesSelectbox)
+            {
+                Match matchSeason = Regex.Match(nodeSelectBox.InnerText, @"^[\d/]+$");
+                if (matchSeason.Success)
+                {
+                        seasonsYear.Add(nodeSelectBox.InnerText.Replace('/', '-'));
+                }
+            }
+            return (comp, seasonsYear);
+        }
+
+        public static PlayerStatistics GetCompPlayerStatisticsById(string compId, string season = "")
+        {
+            string htmlCode = GetHTMLInfo(compId, SearchScope.competitions, $"{season}/players/");
+            if (season == "")
+                season = Regex.Match(htmlCode, @"selectbox-label"">([^<]+)").Groups[1].Value;
+            string cp_ss = Regex.Match(htmlCode, @"cp_ss=([\d]+)").Groups[1].Value;
+            htmlCode = GetHTMLInfo("", SearchScope.data, $"?c=competitions&a=tab_tablesorter_players&cp_ss={cp_ss}&cl=0&page=0&size=0&col[1]=1&col[4]=0");
+            var json = JObject.Parse(htmlCode);
+            var playersStats = new List<RowinPlayerStatistics>();
+            var doc = new HtmlAgilityPack.HtmlDocument();
+            foreach (var row in json["rows"])
+            {
+                string playerId = null, clubId = null;
+                string htmlNameInfo = row[0].ToString();
+                doc.LoadHtml(htmlNameInfo);
+                var hrefCell = doc.DocumentNode.SelectSingleNode(".//a[@class='name']");
+                if (hrefCell != null)
+                {
+                    string hrefStr = hrefCell.GetAttributeValue("href", "");
+                    Match matchPlayerId = Regex.Match(hrefStr, @".*/(\d+)/");
+                    if (matchPlayerId.Groups[1].Success)
+                        playerId = matchPlayerId.Groups[1].Value;
+                }
+                Match matchClubId = Regex.Match(htmlNameInfo, @"clubs/([\d]+)");
+                if (matchClubId.Groups[1].Success)
+                    clubId = matchClubId.Groups[1].Value;
+                var stats = Array.ConvertAll(row.Skip(1).ToArray(), x => { if (x.ToString() != "&nbsp;") return (int)x; else return 0; });
+                var playerStats = new RowinPlayerStatistics
+                {
+                    PlayerId = playerId,
+                    Goals = stats[0],
+                    Assists = stats[1],
+                    Matches = stats[2],
+                    Minutes = stats[3],
+                    GoalPlusPass = stats[4],
+                    PenGoals = stats[5],
+                    DoubleGoals = stats[6],
+                    HatTricks = stats[7],
+                    AutoGoals = stats[8],
+                    YellowCards = stats[9],
+                    YellowRedCards = stats[10],
+                    RedCards = stats[11],
+                    FairPlayScore = stats[12]
+                };
+                playersStats.Add(playerStats);
+            }
+            var competitionPlayerStatistics = new PlayerStatistics
+            {
+                Rows = playersStats
+            };
+            return competitionPlayerStatistics;
         }
 
         //Асинхронный
-        private static List<FootballClub> FindPartOfClubs(List<string> clubsId, string compId, int taskId, int subTaskId)
+        private static async Task SaveCompsAsync(List<string> compsId)
         {
-            var clubsList = new List<FootballClub>();
-            foreach (var clubId in clubsId)
-            {
-                Console.WriteLine($"{new string(' ', taskId * 10)}{compId}{Convert.ToChar(subTaskId + 97)}");
-                var club = GetClubInfoById(clubId);
-                clubsList.Add(club);
-            }
-            return clubsList;
-        }
-        //Асинхронный
-        private static List<FootballClub> FindClubs(List<string> compsId, int taskId)
-        {
-            var clubsList = new List<FootballClub>();
+            var clubsId = new List<string>();
             foreach (var compId in compsId)
             {
-
-                var clubsId = GetClubsIdInLeague(compId);
-                int LEN = 8;
-                var subClubs = SplitIntoSets(clubsId, LEN).ToList();
-                Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[subClubs.Count()];
-                for (int i = 0; i < tasks.Length; i++)
-                {
-                    tasks[i] = new Task<List<FootballClub>>(() => FindPartOfClubs(subClubs[i], compId, taskId, i));
-                    tasks[i].Start();
-                    Thread.Sleep(2000);
-                }
-                try
-                {
-                    Task.WaitAll(tasks);
-                }
-                catch (System.AggregateException)
-                {
-
-                }
-                for (int i = 0; i < tasks.Length; i++)
-                {
-                    clubsList.AddRange(tasks[i].Result);
-                }
+                clubsId.AddRange(GetClubsIdInLeague(compId));
             }
-            return clubsList;
-        }
-        //Асинхронный
-        private static List<Player> FindPartOfPlayers(List<string> playersId, string clubId, int taskId, int subTaskId)
-        {
-            var playerList = new List<Player>();
-            foreach (var playerId in playersId)
-            {
-                Console.WriteLine($"{new string(' ', taskId * 10)}{clubId}{Convert.ToChar(subTaskId + 97)}");
-                var player = GetPlayerInfoById(playerId);
-                playerList.Add(player);
-            }
-            return playerList;
-        }
-        //Асинхронный
-        private static List<Player> FindPlayers(List<string> clubsId, int taskId)
-        {
-            var playersList = new List<Player>();
+            clubsId.Distinct();
             foreach (var clubId in clubsId)
             {
-                var playersId = GetPlayersIdInClub(clubId);
-                int LEN = 8;
-                var subPlayers = SplitIntoSets(playersId, LEN).ToList();
-                Task<List<Player>>[] tasks = new Task<List<Player>>[subPlayers.Count()];
-                for (int i = 0; i < tasks.Length; i++)
-                {
-                    tasks[i] = new Task<List<Player>>(() => FindPartOfPlayers(subPlayers[i], clubId, taskId, i));
-                    tasks[i].Start();
-                    Thread.Sleep(2000);
-                }
-                try
-                {
-                    Task.WaitAll(tasks);
-                }
-                catch (System.AggregateException)
-                {
+                await SaveClubsAsync(clubId);
+            }
+        }
 
-                }
-                for (int i = 0; i < tasks.Length; i++)
+        private static async Task SaveClubsAsync(string clubId)
+        {
+            bool notExist = false;
+
+            using (AppContext db = new AppContext())
+            {
+                if (!db.Clubs.Any(x => x.Id == clubId))
                 {
-                    playersList.AddRange(tasks[i].Result);
+                    var clubInfo = GetClubInfoById(clubId);
+                    db.Clubs.Add(clubInfo);
+                    db.SaveChanges();
+                    notExist = true;
+                }
+                Console.WriteLine($"Клубов загружено: {db.Clubs.Count()}");
+                Console.WriteLine($"Игроков загружено: {db.Players.Count()}");
+            }
+            if (notExist)
+            {
+                var playersId = GetPlayersIdInClub(clubId);
+                foreach (var playerId in playersId)
+                {
+                    await SavePlayerAsync(playerId, clubId);
                 }
             }
-            return playersList;
+        }
+
+        private static async Task SavePlayerAsync(string playerId, string clubId)
+        {
+
+            using (AppContext db = new AppContext())
+            {
+                if (!db.Players.Any(x => x.Id == playerId))
+                {
+                    var playerInfo = await GetPlayerInfoByIdAsync(playerId);
+                    db.Players.Add(playerInfo);
+                }
+                FootballClubPlayer clubPlayer = new FootballClubPlayer { ClubId = clubId, PlayerId = playerId };
+                if (!db.ClubsPlayers.Contains(clubPlayer))
+                {
+                    db.ClubsPlayers.Add(clubPlayer);
+                }
+                db.SaveChanges();
+            }
         }
 
         public static List<string> GetMainCompsId(int page = 1)
@@ -369,101 +437,142 @@ namespace lesson1
         }
 
 
-
-        private static void SaveClubsInBD(List<string> compsId)
+        static async Task Main(string[] args)
         {
-            var clubsList = new List<FootballClub>();
-            int LEN = 8;
-            var subComps = SplitIntoSets(compsId, LEN).ToList();
-            Task<List<FootballClub>>[] tasks = new Task<List<FootballClub>>[subComps.Count()];
-            for (int i = 0; i < tasks.Length; i++)
-            {
-                tasks[i] = new Task<List<FootballClub>>(() => FindClubs(subComps[i], i));
-                tasks[i].Start();
-                Thread.Sleep(2000);
-            }
-            try
-            {
-                Task.WaitAll(tasks);
-            }
-            catch (System.AggregateException)
-            {
-
-            }
-            Console.WriteLine("Обработка результатов");
-            for (int i = 0; i < tasks.Length; i++)
-            {
-                clubsList.AddRange(tasks[i].Result);
-            }
-            Console.WriteLine("Фильтрация данных");
-            var clubs = clubsList.GroupBy(x => x.Id).Select(g => g.First());
-            using (AppContext db = new AppContext())
-            {
-                db.Clubs.AddRange(clubs);
-                db.SaveChanges();
-            }
-        }
-
-        private static void SavePlayersInBD(List<string> clubsId)
-        {
-            var playersList = new List<Player>();
-            int LEN = 200;
-            var subClubs = SplitIntoSets(clubsId, LEN).ToList();
-            var tasks = new Task<List<Player>>[subClubs.Count()];
-            for (int i = 0; i < tasks.Length; i++)
-            {
-                tasks[i] = new Task<List<Player>>(() => FindPlayers(subClubs[i], i));
-                tasks[i].Start();
-                Thread.Sleep(2000);
-            }
-            try
-            {
-                Task.WaitAll(tasks);
-            }
-            catch(System.AggregateException)
-            {
-
-            }
-            Console.WriteLine("Занесение резуль");
-            using (AppContext db = new AppContext())
-            {
-                for (int i = 0; i < tasks.Length; i++)
-                {
-                    db.Players.AddRange(tasks[i].Result);
-                    db.SaveChanges();
-                }
-            }
-        }
-
-
-        static void Main(string[] args)
-        {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
+            //Stopwatch stopwatch = new Stopwatch();
+            //stopwatch.Start();
             //var compsId = GetMainCompsId();
-            var compsId = new List<string> { "12" };
-            SaveClubsInBD(compsId);
-            var clubsId = new List<string>();
+            ////var compsId = new List<string> { "12" };
+            //await SaveCompsAsync(compsId);
+            //stopwatch.Stop();
+            //TimeSpan ts = stopwatch.Elapsed;
+            //string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+            //    ts.Hours, ts.Minutes, ts.Seconds,
+            //    ts.Milliseconds / 10);
+            //Console.WriteLine($"Время работы: { elapsedTime}");
+            var compsId = GetMainCompsId();
             foreach (var compId in compsId)
             {
-                clubsId.AddRange(GetClubsIdInLeague(compId));
+                using (AppContext db = new AppContext())
+                {
+                    var tuple = GetCompetitionInfo(compId);
+                    if (!db.Competitions.Any(x => x.Id == compId))
+                    {
+                        db.Competitions.Add(tuple.comp);
+                    }
+                    db.SaveChanges();
+                    foreach (var seasonYear in tuple.seasonsYear)
+                    {
+                        if(!db.Seasons.Any(x => x.CompetitionId == compId && x.Year == seasonYear))
+                        {
+                            Season season = new Season
+                            {
+                                Year = seasonYear,
+                                CompetitionId = compId
+                            };
+                            db.Seasons.Add(season);
+                        }
+                    }
+                    db.SaveChanges();
+                    Console.WriteLine($"Добавлено лиг: {db.Competitions.Count()}");
+                    Console.WriteLine($"Добавлено сезонов: {db.Seasons.Count()}");
+                }
             }
-            Console.WriteLine($"Количество клубов: {clubsId.Count}");
-            var clubsDistinctId = clubsId.Distinct().ToList();
-            Console.WriteLine($"Количество разных клубов: {clubsDistinctId.Count}");
-            SavePlayersInBD(clubsDistinctId);
-            stopwatch.Stop();
-            TimeSpan ts = stopwatch.Elapsed;
-            string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds / 10);
-            Console.WriteLine($"Время работы: { elapsedTime}");
+
         }
+    }
+
+    class Competition
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Country { get; set; }
+        public List<Season> Seasons { get; set; } = new List<Season>();
+    }
+
+    class Season
+    {
+        public int Id { get; set; }
+
+        public string Year { get; set; }
+        public string CompetitionId { get; set; }
+        [ForeignKey("CompetitionId")]
+        public Competition Competition { get; set; }
+
+        //public List<CompetitionTable> Table { get; set; } = new List<CompetitionTable>();
+        //public List<FootballClubSeason> ClubCompetitionSeasons { get; set; } = new List<FootballClubSeason>();
+    }
+    [NotMapped]
+    class PlayerStatistics
+    {
+        public string Id { get; set; }
+        public string CompetitionSeasonId { get; set; }
+        [ForeignKey("CompetitionSeasonId")]
+        public Season CompetitionSeason { get; set; }
+        public List<RowinPlayerStatistics> Rows { get; set; } = new List<RowinPlayerStatistics>();
+    }
+    [NotMapped]
+    class RowinPlayerStatistics
+    {
+        public string Id { get; set; }
+        public string PlayerStatisticsId { get; set; }
+        [ForeignKey("PlayerStatisticsId")]
+        public PlayerStatistics PlayerStatistics { get; set; }
+        public string PlayerId { get; set; }
+        [ForeignKey("PlayerId")]
+        public Player PlayerName { get; set; }
+        public string ClubId { get; set; }
+        [ForeignKey("ClubId")]
+        public FootballClub Club { get; set; }
+        public int Goals { get; set; }
+        public int Assists { get; set; }
+        public int Matches { get; set; }
+        public int Minutes { get; set; }
+        public int GoalPlusPass { get; set; }
+        public int PenGoals { get; set; }
+        public int DoubleGoals { get; set; }
+        public int HatTricks { get; set; }
+        public int AutoGoals { get; set; }
+        public int YellowCards { get; set; }
+        public int YellowRedCards { get; set; }
+        public int RedCards { get; set; }
+        public int FairPlayScore { get; set; }
+    }
+    [NotMapped]
+    class CompetitionTable
+    {
+        public string Id { get; set; }
+        public string GroupName { get; set; }
+        public string CompetitionSeasonId { get; set; }
+        [ForeignKey("CompetitionSeasonId")]
+        public Season CompetitionSeason { get; set; }
+        public List<RowInCompetitionTable> Rows { get; set; } = new List<RowInCompetitionTable>();
+    }
+    [NotMapped]
+    class RowInCompetitionTable
+    {
+        public string Id { get; set; }
+        public string CompetitionTableId { get; set; }
+        [ForeignKey("CompetitionTableId")]
+        public CompetitionTable CompetitionTable { get; set; }
+        public int Position { get; set; }
+        public string ClubId { get; set; }
+        [ForeignKey("ClubId")]
+        public FootballClub Club { get; set; }
+        public int GamesPlayed { get; set; }
+        public int GamesWon { get; set; }
+        public int GamesDrawn { get; set; }
+        public int GamesLost { get; set; }
+        public int GoalsScored { get; set; }
+        public int GoalsMissed { get; set; }
+        public int GoalsDifference { get; set; }
+        public int Points { get; set; }
     }
 
     class FootballClub
     {
         public string Id { get; set; }
+        [Column("ClubName")]
         public string Name { get; set; }
         public string NameEnglish { get; set; }
         public string FullName { get; set; }
@@ -473,7 +582,20 @@ namespace lesson1
         public string Stadium { get; set; }
         public string FoundationDate { get; set; }
         public int? Rating { get; set; }
-        public List<Player> Players { get; set; }
+        public List<FootballClubPlayer> ClubPlayer { get; set; } = new List<FootballClubPlayer>();
+
+        [NotMapped]
+        public List<FootballClubSeason> ClubCompetitionSeasons { get; set; } = new List<FootballClubSeason>();
+    }
+    [NotMapped]
+    class FootballClubSeason
+    {
+        public string ClubId { get; set; }
+        //[ForeignKey("ClubId")]
+        public FootballClub Club { get; set; }
+        public string CompetitionSeasonId { get; set; }
+        //[ForeignKey("CompetitionSeasonId")]
+        public Season CompetitionSeason { get; set; }
     }
 
     class Player
@@ -481,9 +603,6 @@ namespace lesson1
         public string Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string ClubId { get; set; }
-        [ForeignKey("ClubId")]
-        public List<FootballClub> Clubs { get; set; }
         public int? Number { get; set; }
         public string Position { get; set; }
         [Column(TypeName = "date")]
@@ -494,16 +613,52 @@ namespace lesson1
         public string OriginalName { get; set; }
         public string Citizenship { get; set; }
         public string PlaceOfBirth { get; set; }
+        public List<FootballClubPlayer> ClubPlayer { get; set; } = new List<FootballClubPlayer>();
+    }
+
+    class FootballClubPlayer
+    {
+        public string ClubId { get; set; }
+        public FootballClub Club { get; set; }
+        public string PlayerId { get; set; }
+        public Player Player { get; set; }
+
     }
 
     class AppContext : DbContext
     {
+        public DbSet<Competition> Competitions { get; set; }
+        public DbSet<Season> Seasons { get; set; }
+        //public DbSet<PlayerStatistics> PlayerStatistics { get; set; }
+        //public DbSet<RowinPlayerStatistics> RowsinPlayerStatistics { get; set; }
+        //public DbSet<CompetitionTable> CompetitionTable { get; set; }
+        //public DbSet<RowInCompetitionTable> RowsInCompetitionTable { get; set; }
+        //public DbSet<FootballClubSeason> ClubsSeasons { get; set; }
         public DbSet<FootballClub> Clubs { get; set; }
         public DbSet<Player> Players { get; set; }
+        public DbSet<FootballClubPlayer> ClubsPlayers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS; DATABASE=TestDB; Trusted_Connection=True");
+            optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS; DATABASE=FootballDB; Trusted_Connection=True");
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<FootballClubPlayer>()
+                .HasKey(t => new { t.ClubId, t.PlayerId });
+            modelBuilder.Entity<FootballClubPlayer>()
+                .HasOne(p => p.Player).WithMany(p => p.ClubPlayer).HasForeignKey(p => p.PlayerId);
+            modelBuilder.Entity<FootballClubPlayer>()
+                .HasOne(c => c.Club).WithMany(c => c.ClubPlayer).HasForeignKey(c => c.ClubId);
+
+            //modelBuilder.Entity<FootballClubSeason>()
+            //    .HasKey(t => new { t.ClubId, t.CompetitionSeasonId });
+            //modelBuilder.Entity<FootballClubSeason>()
+            //    .HasOne(c => c.Club).WithMany(c => c.ClubCompetitionSeasons).HasForeignKey(c => c.ClubId);
+            //modelBuilder.Entity<FootballClubSeason>()
+            //    .HasOne(s => s.CompetitionSeason).WithMany(s => s.ClubCompetitionSeasons).HasForeignKey(s => s.CompetitionSeasonId);
+
         }
     }
 }

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "9+JNruSXGfu4USQx8KtI9rCh3UjxlyL4bmeU2T1iLZoNVVms87qd70g0sp6CMNDJAaGvDgqthLNby78l245nrA==",
+  "dgSpecHash": "O2UIDKtNEMtngTHpFYnafaerB11S4udW7oT6PrCx62CDxNAEap0cGw/Hr7DN6KNkdZAOfQEHw7yke/uHnHm7zA==",
   "success": true,
   "projectFilePath": "D:\\VisualProjects\\C#\\EntityFramework\\lesson1\\lesson1\\lesson1.csproj",
   "expectedPackageFiles": [
@@ -101,7 +101,8 @@
     "C:\\Users\\Jefisto\\.nuget\\packages\\system.xml.readerwriter\\4.3.0\\system.xml.readerwriter.4.3.0.nupkg.sha512",
     "C:\\Users\\Jefisto\\.nuget\\packages\\system.xml.xdocument\\4.3.0\\system.xml.xdocument.4.3.0.nupkg.sha512",
     "C:\\Users\\Jefisto\\.nuget\\packages\\system.xml.xmldocument\\4.3.0\\system.xml.xmldocument.4.3.0.nupkg.sha512",
-    "C:\\Users\\Jefisto\\.nuget\\packages\\system.xml.xmlserializer\\4.3.0\\system.xml.xmlserializer.4.3.0.nupkg.sha512"
+    "C:\\Users\\Jefisto\\.nuget\\packages\\system.xml.xmlserializer\\4.3.0\\system.xml.xmlserializer.4.3.0.nupkg.sha512",
+    "C:\\Users\\Jefisto\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\3.1.25\\microsoft.netcore.app.host.win-x64.3.1.25.nupkg.sha512"
   ],
   "logs": []
 }

@@ -19,19 +19,20 @@ namespace lesson1.Migrations
                 .HasAnnotation("ProductVersion", "5.0.17")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("FootballClubPlayer", b =>
+            modelBuilder.Entity("lesson1.Competition", b =>
                 {
-                    b.Property<string>("ClubsId")
+                    b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("PlayersId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<string>("Country")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("ClubsId", "PlayersId");
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasIndex("PlayersId");
+                    b.HasKey("Id");
 
-                    b.ToTable("FootballClubPlayer");
+                    b.ToTable("Competitions");
                 });
 
             modelBuilder.Entity("lesson1.FootballClub", b =>
@@ -55,7 +56,8 @@ namespace lesson1.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ClubName");
 
                     b.Property<string>("NameEnglish")
                         .HasColumnType("nvarchar(max)");
@@ -71,15 +73,27 @@ namespace lesson1.Migrations
                     b.ToTable("Clubs");
                 });
 
+            modelBuilder.Entity("lesson1.FootballClubPlayer", b =>
+                {
+                    b.Property<string>("ClubId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PlayerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("ClubId", "PlayerId");
+
+                    b.HasIndex("PlayerId");
+
+                    b.ToTable("ClubsPlayers");
+                });
+
             modelBuilder.Entity("lesson1.Player", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Citizenship")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClubId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DateOfBirth")
@@ -117,19 +131,67 @@ namespace lesson1.Migrations
                     b.ToTable("Players");
                 });
 
-            modelBuilder.Entity("FootballClubPlayer", b =>
+            modelBuilder.Entity("lesson1.Season", b =>
                 {
-                    b.HasOne("lesson1.FootballClub", null)
-                        .WithMany()
-                        .HasForeignKey("ClubsId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("CompetitionId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Year")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompetitionId");
+
+                    b.ToTable("Seasons");
+                });
+
+            modelBuilder.Entity("lesson1.FootballClubPlayer", b =>
+                {
+                    b.HasOne("lesson1.FootballClub", "Club")
+                        .WithMany("ClubPlayer")
+                        .HasForeignKey("ClubId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("lesson1.Player", null)
-                        .WithMany()
-                        .HasForeignKey("PlayersId")
+                    b.HasOne("lesson1.Player", "Player")
+                        .WithMany("ClubPlayer")
+                        .HasForeignKey("PlayerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Club");
+
+                    b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("lesson1.Season", b =>
+                {
+                    b.HasOne("lesson1.Competition", "Competition")
+                        .WithMany("Seasons")
+                        .HasForeignKey("CompetitionId");
+
+                    b.Navigation("Competition");
+                });
+
+            modelBuilder.Entity("lesson1.Competition", b =>
+                {
+                    b.Navigation("Seasons");
+                });
+
+            modelBuilder.Entity("lesson1.FootballClub", b =>
+                {
+                    b.Navigation("ClubPlayer");
+                });
+
+            modelBuilder.Entity("lesson1.Player", b =>
+                {
+                    b.Navigation("ClubPlayer");
                 });
 #pragma warning restore 612, 618
         }
