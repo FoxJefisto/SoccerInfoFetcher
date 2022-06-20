@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace lesson1.Migrations
 {
-    public partial class t : Migration
+    public partial class one : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -69,7 +69,8 @@ namespace lesson1.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Year = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CompetitionId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    CompetitionId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    PlayerStatisticsId = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -106,10 +107,83 @@ namespace lesson1.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "PlayerStatistics",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SeasonId = table.Column<int>(type: "int", nullable: false),
+                    PlayerId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    ClubId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    Goals = table.Column<int>(type: "int", nullable: false),
+                    Assists = table.Column<int>(type: "int", nullable: false),
+                    Matches = table.Column<int>(type: "int", nullable: false),
+                    Minutes = table.Column<int>(type: "int", nullable: false),
+                    GoalPlusPass = table.Column<int>(type: "int", nullable: false),
+                    PenGoals = table.Column<int>(type: "int", nullable: false),
+                    DoubleGoals = table.Column<int>(type: "int", nullable: false),
+                    HatTricks = table.Column<int>(type: "int", nullable: false),
+                    AutoGoals = table.Column<int>(type: "int", nullable: false),
+                    YellowCards = table.Column<int>(type: "int", nullable: false),
+                    YellowRedCards = table.Column<int>(type: "int", nullable: false),
+                    RedCards = table.Column<int>(type: "int", nullable: false),
+                    FairPlayScore = table.Column<int>(type: "int", nullable: false),
+                    PlayerStatisticsId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlayerStatistics", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PlayerStatistics_Clubs_ClubId",
+                        column: x => x.ClubId,
+                        principalTable: "Clubs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PlayerStatistics_Players_PlayerId",
+                        column: x => x.PlayerId,
+                        principalTable: "Players",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PlayerStatistics_Seasons_PlayerStatisticsId",
+                        column: x => x.PlayerStatisticsId,
+                        principalTable: "Seasons",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PlayerStatistics_Seasons_SeasonId",
+                        column: x => x.SeasonId,
+                        principalTable: "Seasons",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_ClubsPlayers_PlayerId",
                 table: "ClubsPlayers",
                 column: "PlayerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlayerStatistics_ClubId",
+                table: "PlayerStatistics",
+                column: "ClubId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlayerStatistics_PlayerId",
+                table: "PlayerStatistics",
+                column: "PlayerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlayerStatistics_PlayerStatisticsId",
+                table: "PlayerStatistics",
+                column: "PlayerStatisticsId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlayerStatistics_SeasonId",
+                table: "PlayerStatistics",
+                column: "SeasonId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Seasons_CompetitionId",
@@ -123,13 +197,16 @@ namespace lesson1.Migrations
                 name: "ClubsPlayers");
 
             migrationBuilder.DropTable(
-                name: "Seasons");
+                name: "PlayerStatistics");
 
             migrationBuilder.DropTable(
                 name: "Clubs");
 
             migrationBuilder.DropTable(
                 name: "Players");
+
+            migrationBuilder.DropTable(
+                name: "Seasons");
 
             migrationBuilder.DropTable(
                 name: "Competitions");

@@ -10,8 +10,8 @@ using lesson1;
 namespace lesson1.Migrations
 {
     [DbContext(typeof(AppContext))]
-    [Migration("20220619170540_t")]
-    partial class t
+    [Migration("20220620112402_third")]
+    partial class third
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -90,6 +90,21 @@ namespace lesson1.Migrations
                     b.ToTable("ClubsPlayers");
                 });
 
+            modelBuilder.Entity("lesson1.FootballClubSeason", b =>
+                {
+                    b.Property<string>("ClubId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("SeasonId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ClubId", "SeasonId");
+
+                    b.HasIndex("SeasonId");
+
+                    b.ToTable("ClubsSeasons");
+                });
+
             modelBuilder.Entity("lesson1.Player", b =>
                 {
                     b.Property<string>("Id")
@@ -133,6 +148,72 @@ namespace lesson1.Migrations
                     b.ToTable("Players");
                 });
 
+            modelBuilder.Entity("lesson1.PlayerStatistics", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("Assists")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AutoGoals")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ClubId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("DoubleGoals")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FairPlayScore")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoalPlusPass")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Goals")
+                        .HasColumnType("int");
+
+                    b.Property<int>("HatTricks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Matches")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Minutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PenGoals")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PlayerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RedCards")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SeasonId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("YellowCards")
+                        .HasColumnType("int");
+
+                    b.Property<int>("YellowRedCards")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubId");
+
+                    b.HasIndex("PlayerId");
+
+                    b.HasIndex("SeasonId");
+
+                    b.ToTable("PlayerStatistics");
+                });
+
             modelBuilder.Entity("lesson1.Season", b =>
                 {
                     b.Property<int>("Id")
@@ -172,6 +253,48 @@ namespace lesson1.Migrations
                     b.Navigation("Player");
                 });
 
+            modelBuilder.Entity("lesson1.FootballClubSeason", b =>
+                {
+                    b.HasOne("lesson1.FootballClub", "Club")
+                        .WithMany("ClubCompetitionSeasons")
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("lesson1.Season", "Season")
+                        .WithMany("ClubCompetitionSeasons")
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Club");
+
+                    b.Navigation("Season");
+                });
+
+            modelBuilder.Entity("lesson1.PlayerStatistics", b =>
+                {
+                    b.HasOne("lesson1.FootballClub", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId");
+
+                    b.HasOne("lesson1.Player", "PlayerName")
+                        .WithMany("PlayerStatistics")
+                        .HasForeignKey("PlayerId");
+
+                    b.HasOne("lesson1.Season", "Season")
+                        .WithMany("PlayerStatistics")
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Club");
+
+                    b.Navigation("PlayerName");
+
+                    b.Navigation("Season");
+                });
+
             modelBuilder.Entity("lesson1.Season", b =>
                 {
                     b.HasOne("lesson1.Competition", "Competition")
@@ -188,12 +311,23 @@ namespace lesson1.Migrations
 
             modelBuilder.Entity("lesson1.FootballClub", b =>
                 {
+                    b.Navigation("ClubCompetitionSeasons");
+
                     b.Navigation("ClubPlayer");
                 });
 
             modelBuilder.Entity("lesson1.Player", b =>
                 {
                     b.Navigation("ClubPlayer");
+
+                    b.Navigation("PlayerStatistics");
+                });
+
+            modelBuilder.Entity("lesson1.Season", b =>
+                {
+                    b.Navigation("ClubCompetitionSeasons");
+
+                    b.Navigation("PlayerStatistics");
                 });
 #pragma warning restore 612, 618
         }
