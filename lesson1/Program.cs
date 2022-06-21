@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,12 +31,19 @@ namespace lesson1
             competitions,
             data
         }
+
+        /// <summary>
+        /// Получает и возвращает информацию о клубе. Осуществляет парсинг по html строке
+        /// </summary>
+        /// <param name="htmlCode"></param>
+        /// <param name="clubId"></param>
+        /// <returns></returns>
         public static FootballClub GetClubInfo(string htmlCode, string clubId)
         {
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(htmlCode);
             var nodeName = doc.DocumentNode.SelectSingleNode(".//div[@class='profile_info new']/h1[@class='profile_info_title red']");
-            if(nodeName == null)
+            if (nodeName == null)
             {
                 return null;
             }
@@ -112,6 +120,22 @@ namespace lesson1
             return club;
         }
 
+        /// <summary>
+        /// Возвращает информацию о клубе с сайта
+        /// </summary>
+        /// <param name="clubId"></param>
+        /// <returns></returns>
+        public static FootballClub GetClubInfoById(string clubId)
+        {
+            string htmlCode = GetHTMLInfo(clubId, SearchScope.clubs);
+            return GetClubInfo(htmlCode, clubId);
+        }
+
+        /// <summary>
+        /// Возвращает id игроков, которые играют в клубе с данным clubId
+        /// </summary>
+        /// <param name="clubId"></param>
+        /// <returns></returns>
         public static List<string> GetPlayersIdInClub(string clubId)
         {
             string htmlCode = GetHTMLInfo(clubId, SearchScope.clubs, "&tab=squads");
@@ -131,11 +155,12 @@ namespace lesson1
             return playersId;
         }
 
-        public static async Task<List<string>> GetPlayersIdInClubAsync(string clubId)
-        {
-            return await Task.Run(() => GetPlayersIdInClub(clubId));
-        }
-
+        /// <summary>
+        /// Возвращает экземпляр класса Player и Id его клуба. Осуществляет парсинг по html строке
+        /// </summary>
+        /// <param name="htmlCode"></param>
+        /// <param name="playerId"></param>
+        /// <returns></returns>
         public static (Player player, string clubId) GetPlayerInfo(string htmlCode, string playerId)
         {
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
@@ -234,24 +259,25 @@ namespace lesson1
             return (player, clubId);
         }
 
+        /// <summary>
+        /// Возвращает экземпляр класса Player и Id его клуба
+        /// </summary>
+        /// <param name="playerId"></param>
+        /// <returns></returns>
         public static (Player player, string clubId) GetPlayerInfoById(string playerId)
         {
             string htmlCode = GetHTMLInfo(playerId, SearchScope.players);
             return GetPlayerInfo(htmlCode, playerId);
         }
-        public static FootballClub GetClubInfoById(string clubId)
-        {
-            string htmlCode = GetHTMLInfo(clubId, SearchScope.clubs);
-            return GetClubInfo(htmlCode, clubId);
-        }
-        public static async Task<(Player player, string clubId)> GetPlayerInfoByIdAsync(string playerId)
-        {
-            return await Task.Run(() => GetPlayerInfoById(playerId));
-        }
-        public static async Task<FootballClub> GetClubInfoByIdAsync(string clubId)
-        {
-            return await Task.Run(() => GetClubInfoById(clubId));
-        }
+
+        /// <summary>
+        /// Возвращает строку содержащую html код страницы.
+        /// </summary>
+        /// <param name="id">id</param>
+        /// <param name="scope">Тип сущности для id</param>
+        /// <param name="data1">Дополнительная строка для дополнения ссылки</param>
+        /// <param name="data2">Дополнительная строка для дополнения ссылки</param>
+        /// <returns></returns>
         public static string GetHTMLInfo(string id, SearchScope scope, string data1 = null, string data2 = null)
         {
             string address;
@@ -271,6 +297,13 @@ namespace lesson1
 
             return restClient.GetStringAsync(address).Result;
         }
+
+        /// <summary>
+        /// Получить клубы определенного сезона
+        /// </summary>
+        /// <param name="compId">id Соревнования</param>
+        /// <param name="season">Год сезона</param>
+        /// <returns></returns>
         public static List<string> GetClubsIdInLeague(string compId, string season)
         {
             string htmlCode = GetHTMLInfo(compId, SearchScope.competitions, $"{season}/teams/");
@@ -290,6 +323,11 @@ namespace lesson1
             return clubs;
         }
 
+        /// <summary>
+        /// Возвращает информацию о клубе по его id
+        /// </summary>
+        /// <param name="compId"></param>
+        /// <returns></returns>
         public static (Competition comp, List<string> seasonsYear) GetCompetitionInfo(string compId)
         {
             string htmlCode = GetHTMLInfo(compId, SearchScope.competitions);
@@ -324,7 +362,12 @@ namespace lesson1
             return (comp, seasonsYear);
         }
 
-
+        /// <summary>
+        /// Возвращает все id игроков и все id клубов из сезона
+        /// </summary>
+        /// <param name="compId">id соревнования</param>
+        /// <param name="season">год сезона</param>
+        /// <returns></returns>
         public static (List<string> playersId, List<string> clubsId) GetAllPlayersAndClubsIdInSeason(string compId, string season = "")
         {
             string htmlCode = GetHTMLInfo(compId, SearchScope.competitions, $"{season}/players/");
@@ -361,11 +404,13 @@ namespace lesson1
             return (playersId, clubsId);
         }
 
-        public static async Task<(List<string> playersId, List<string> clubsId)> GetAllPlayersAndClubsIdInSeasonAsync(string compId, string season = "")
-        {
-            return await Task.Run(() => GetAllPlayersAndClubsIdInSeason(compId, season));
-        }
-
+        /// <summary>
+        /// Возвращает статистику игроков в заданном соревновании и заданном сезоне
+        /// </summary>
+        /// <param name="compId">id соревнования</param>
+        /// <param name="seasonId">id сезона</param>
+        /// <param name="season">год сезона</param>
+        /// <returns></returns>
         public static List<PlayerStatistics> GetSeasonPlayerStatisticsById(string compId, int seasonId, string season = "")
         {
             string htmlCode = GetHTMLInfo(compId, SearchScope.competitions, $"{season}/players/");
@@ -417,217 +462,374 @@ namespace lesson1
             return playersStats;
         }
 
-        private static void SaveDB(List<string> compsId)
+        public static List<CompetitionTable> GetCompetitionTableById(string id, int seasonId, string season)
+        {
+            string htmlCode = GetHTMLInfo(id, SearchScope.competitions, season + "/");
+            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+            doc.LoadHtml(htmlCode);
+            var nodesTable = doc.DocumentNode.SelectNodes(".//table[@class='stngs']");
+            if (nodesTable == null)
+                return null;
+            List<CompetitionTable> table = new List<CompetitionTable>();
+            int iTable = 0;
+            foreach (var nodeTable in nodesTable)
+            {
+                var nodeRows = nodeTable.SelectNodes(".//tbody/tr");
+                if (nodeRows.Count == 0)
+                    return null;
+                string groupName = null;
+                if (nodesTable.Count > 1)
+                {
+                    groupName = Convert.ToString(Convert.ToChar(65 + iTable));
+                }
+                foreach (var nodeRow in nodeRows)
+                {
+                    var nodePosition = nodeRow.SelectSingleNode(".//div[@class]");
+                    int position = int.Parse(nodePosition.InnerText);
+                    var nodeName = nodeRow.SelectSingleNode(".//span");
+                    string clubId = null;
+                    Match matchClub = Regex.Match(nodeName.InnerHtml, @"href=""\/clubs\/([0-9]+)");
+                    if (matchClub.Success)
+                    {
+                        clubId = matchClub.Groups[1].Value;
+                    }
+                    int[] sts = new int[8];
+                    int jColumn = 0;
+                    var nodeColumns = nodeRow.SelectNodes(".//td[@class='ctr']");
+                    foreach (var nodeColumn in nodeColumns)
+                    {
+                        sts[jColumn] = int.Parse(nodeColumn.InnerText);
+                        jColumn++;
+                    }
+                    CompetitionTable row = new CompetitionTable
+                    {
+                        Position = position,
+                        ClubId = clubId,
+                        GamesPlayed = sts[0],
+                        GamesWon = sts[1],
+                        GamesDrawn = sts[2],
+                        GamesLost = sts[3],
+                        GoalsScored = sts[4],
+                        GoalsMissed = sts[5],
+                        GoalsDifference = sts[6],
+                        Points = sts[7],
+                        GroupName = groupName,
+                        SeasonId = seasonId
+                    };
+                    table.Add(row);
+                }
+                iTable++;
+            }
+            return table;
+        }
+
+        public static void SaveDB(List<string> compsId)
+        {
+            //SaveCompetitionsInfoAsync(compsId).GetAwaiter().GetResult();
+            Season[] seasons;
+            using (AppContext db = new AppContext())
+            {
+                seasons = db.Seasons.ToArray();
+            }
+            //var clubsId = new List<string>();
+            //var playersId = new List<string>();
+            //foreach (var season in seasons)
+            //{
+            //    var result = GetAllPlayersAndClubsIdInSeason(season.CompetitionId, season.Year);
+            //    playersId.AddRange(result.Item1);
+            //    clubsId.AddRange(result.Item2);
+            //}
+            //var players = playersId.Distinct().ToArray();
+            //var clubs = clubsId.Distinct().ToArray();
+            //Console.WriteLine($"Клубов получено: {clubs.Length}");
+            //Console.WriteLine($"Игроков получено: {players.Length}");
+
+            //SaveClubsAsync(clubs.Where(x => x != null).ToArray()).GetAwaiter().GetResult();
+            //SavePlayersAsync(players.Where(x => x != null).ToArray()).GetAwaiter().GetResult();
+            //SaveSeasonsClubsIdAsync(seasons).GetAwaiter().GetResult();
+            SaveSeasonsPlayerStatisticsAsync(seasons).GetAwaiter().GetResult();
+            SaveSeasonsCompetitionTableAsync(seasons).GetAwaiter().GetResult();
+        }
+
+        public static async Task SaveCompetitionsInfoAsync(List<string> compsId)
+        {
+            Task[] tasks = new Task[compsId.Count];
+            int i = 0;
+            foreach (var compId in compsId)
+            {
+                tasks[i] = SaveOneCompetitionInfoAsync(compId);
+                i++;
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        public static async Task SaveOneCompetitionInfoAsync(string compId)
+        {
+            await Task.Run(() => SaveCompetitionInfo(compId));
+        }
+
+        public static async Task SaveClubsAsync(string[] clubsId)
+        {
+            Task[] tasks = new Task[clubsId.Length];
+            int i = 0;
+            foreach (var clubId in clubsId)
+            {
+                tasks[i] = SaveOneClubAsync(clubId);
+                i++;
+                await Task.Delay(50);
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        public static async Task SaveOneClubAsync(string clubId)
+        {
+            await Task.Run(() => SaveOneClub(clubId));
+        }
+
+        public static async Task SavePlayersAsync(string[] playersId)
+        {
+            Task[] tasks = new Task[playersId.Length];
+            int i = 0;
+            foreach (var playerId in playersId)
+            {
+                tasks[i] = SaveOnePlayerAsync(playerId);
+                i++;
+                await Task.Delay(50);
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        public static async Task SaveOnePlayerAsync(string playerId)
+        {
+            await Task.Run(() => SaveOnePlayer(playerId));
+        }
+
+        public static async Task SaveSeasonsClubsIdAsync(Season[] seasons)
+        {
+            Task[] tasks = new Task[seasons.Length];
+            int i = 0;
+            foreach (var season in seasons)
+            {
+                tasks[i] = SaveOneSeasonClubsIdAsync(season);
+                i++;
+                await Task.Delay(50);
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        public static async Task SaveOneSeasonClubsIdAsync(Season season)
+        {
+            await Task.Run(() => SaveOneSeasonClubsId(season));
+        }
+
+        public static async Task SaveSeasonsPlayerStatisticsAsync(Season[] seasons)
         {
             using (AppContext db = new AppContext())
             {
-                SaveCompetitionsAsync(compsId, db).GetAwaiter().GetResult();
-                Season[] seasons = db.Seasons.ToArray();
-                var clubsId = new List<string>();
-                var playersId = new List<string>();
-                foreach (var season in seasons)
+                db.Database.ExecuteSqlRaw("TRUNCATE TABLE [PlayerStatistics]");
+                Console.WriteLine("Удалены таблицы статистики игроков");
+            }
+            Thread.Sleep(3000);
+            Task[] tasks = new Task[seasons.Length];
+            int i = 0;
+            foreach (var season in seasons)
+            {
+                tasks[i] = SaveOneSeasonPlayerStatisticsAsync(season);
+                i++;
+                await Task.Delay(150);
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        public static async Task SaveOneSeasonPlayerStatisticsAsync(Season season)
+        {
+            await Task.Run(() => SaveOneSeasonPlayerStatistics(season));
+        }
+
+        public static async Task SaveSeasonsCompetitionTableAsync(Season[] seasons)
+        {
+            using (AppContext db = new AppContext())
+            {
+                db.Database.ExecuteSqlRaw("TRUNCATE TABLE [CompetitionTable]");
+                Console.WriteLine("Удалены турнирные таблицы");
+            }
+            Thread.Sleep(3000);
+            Task[] tasks = new Task[seasons.Length];
+            int i = 0;
+            foreach (var season in seasons)
+            {
+                tasks[i] = SaveOneSeasonCompetitionTableAsync(season);
+                i++;
+                await Task.Delay(150);
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        public static async Task SaveOneSeasonCompetitionTableAsync(Season season)
+        {
+            await Task.Run(() => SaveOneSeasonCompetitionTable(season));
+        }
+
+        public static void SaveOneClub(string clubId)
+        {
+            using (AppContext db = new AppContext())
+            {
+                Console.WriteLine($"Клуб {clubId}");
+                if (!db.Clubs.Any(x => x.Id == clubId))
                 {
-                    var result = GetAllPlayersAndClubsIdInSeason(season.CompetitionId, season.Year);
-                    playersId.AddRange(result.Item1);
-                    clubsId.AddRange(result.Item2);
+                    var clubInfo = GetClubInfoById(clubId);
+                    db.Clubs.Add(clubInfo);
+                    Console.WriteLine($"Клубов загружено: {clubId} ({db.Clubs.Count()})");
                 }
-                var players = playersId.Distinct().ToArray();
-                var clubs = clubsId.Distinct().ToArray();
-                Console.WriteLine($"Клубов получено: {clubs.Length}");
-                Console.WriteLine($"Игроков получено: {players.Length}");
-                SaveClubsAsync(clubs, db).GetAwaiter().GetResult();
-                SavePlayersAsync(players, db).GetAwaiter().GetResult();
-                SaveSeasonsClubsIdAsync(db).GetAwaiter().GetResult();
-                SaveSeasonsPlayerStatisticsAsync(db).GetAwaiter().GetResult();
-            }
-        }
-
-        public static async Task SaveCompetitionsAsync(IEnumerable<string> compsId, AppContext db)
-        {
-            foreach (var compId in compsId)
-            {
-                await SaveCompetitionInfoAsync(compId, db);
-            }
-        }
-
-        public static async Task SaveClubsAsync(IEnumerable<string> clubsId, AppContext db)
-        {
-            foreach (var clubId in clubsId)
-            {
-                if (clubId != null)
-                {
-                    await SaveOneClubAsync(clubId, db);
-                }
-            }
-        }
-        public static async Task SavePlayersAsync(IEnumerable<string> playersId, AppContext db)
-        {
-            foreach (var playerId in playersId)
-            {
-                if (playerId != null)
-                {
-                    await SaveOnePlayerAsync(playerId, db);
-                }
-            }
-        }
-
-        public static void SaveOneClub(string clubId, AppContext db)
-        {
-            Console.WriteLine($"Клуб {clubId}");
-            if (!db.Clubs.Any(x => x.Id == clubId))
-            {
-                var clubInfo = GetClubInfoById(clubId);
-                db.Clubs.Add(clubInfo);
-                Console.WriteLine($"Клубов загружено: {clubId} ({db.Clubs.Count()})");
-            }
-            db.SaveChanges();
-        }
-
-        public static void SaveOnePlayer(string playerId, AppContext db)
-        {
-            Console.WriteLine($"Игрок {playerId}");
-            if (!db.Players.Any(x => x.Id == playerId))
-            {
-                var tuple = GetPlayerInfoById(playerId);
                 try
                 {
-                    db.Players.Add(tuple.player);
-                    FootballClubPlayer clubPlayer = new FootballClubPlayer { ClubId = tuple.clubId, PlayerId = playerId };
-                    if (tuple.clubId == null || tuple.clubId == "")
-                    {
-                        Console.WriteLine($"У игрока {playerId} нет клуба.");
-                    }
-                    else if (!db.ClubsPlayers.Contains(clubPlayer))
-                    {
-                        db.ClubsPlayers.Add(clubPlayer);
-                        Console.WriteLine($"Игрок загружен: {playerId} ({db.Players.Count()})");
-                    }
                     db.SaveChanges();
                 }
-                catch (DbUpdateException)
+                catch(SqlException)
                 {
-                    Console.WriteLine($"Игрок {playerId} играет в клубе {tuple.clubId} которого нет в БД. Исправляем!");
-                    if (tuple.clubId != null)
-                    {
-                        SaveOneClub(tuple.clubId, db);
-                        Console.WriteLine($"Клуб {tuple.clubId} успешно добавлен");
-                        SaveOnePlayer(playerId, db);
-                    }
-                }
-
-            }
-        }
-
-        public static async Task SaveOneClubAsync(string clubId, AppContext db)
-        {
-            await Task.Run(() => SaveOneClub(clubId, db));
-        }
-
-        public static async Task SaveOnePlayerAsync(string playerId, AppContext db)
-        {
-            await Task.Run(() => SaveOnePlayer(playerId, db));
-        }
-
-        public static void SaveCompetitionInfo(string compId, AppContext db)
-        {
-            var tuple = GetCompetitionInfo(compId);
-            if (!db.Competitions.Any(x => x.Id == compId))
-            {
-                db.Competitions.Add(tuple.comp);
-            }
-            db.SaveChanges();
-            Console.WriteLine($"Добавлено лиг: {db.Competitions.Count()}");
-
-            foreach (var seasonYear in tuple.seasonsYear)
-            {
-                if (!db.Seasons.Any(x => x.CompetitionId == compId && x.Year == seasonYear))
-                {
-                    Season season = new Season
-                    {
-                        Year = seasonYear,
-                        CompetitionId = compId
-                    };
-                    db.Seasons.Add(season);
+                    Console.WriteLine($"Клуб {clubId} уже есть в БД");
                 }
             }
-            db.SaveChanges();
-            Console.WriteLine($"Добавлено сезонов: {db.Seasons.Count()}");
         }
 
-        public static async Task SaveCompetitionInfoAsync(string compId, AppContext db)
+        public static void SaveOnePlayer(string playerId)
         {
-            await Task.Run(() => SaveCompetitionInfo(compId, db));
-        }
-
-        public static void SaveOneSeasonPlayerStatistics(Season season, AppContext db)
-        {
-            var playerStatistics = GetSeasonPlayerStatisticsById(season.CompetitionId, season.Id, season.Year);
-            db.PlayerStatistics.AddRange(playerStatistics);
-            db.SaveChanges();
-            Console.WriteLine($"Добавлено строк статистики игроков: {db.PlayerStatistics.Count()}");
-
-        }
-
-        public static async Task SaveOneSeasonPlayerStatisticsAsync(Season season, AppContext db)
-        {
-            await Task.Run(() => SaveOneSeasonPlayerStatistics(season, db));
-        }
-
-        public static async Task SaveSeasonsPlayerStatisticsAsync(AppContext db)
-        {
-            Season[] seasons;
-            seasons = db.Seasons.ToArray();
-            foreach (var season in seasons)
+            using (AppContext db = new AppContext())
             {
-                await SaveOneSeasonPlayerStatisticsAsync(season, db);
-            }
-        }
-
-        public static void SaveOneSeasonClubsId(Season season, AppContext db)
-        {
-            var clubsId = GetClubsIdInLeague(season.CompetitionId, season.Year);
-            foreach (var clubId in clubsId)
-            {
-                try
+                Console.WriteLine($"Игрок {playerId}");
+                if (!db.Players.Any(x => x.Id == playerId))
                 {
-                    if (!db.ClubsSeasons.Any(x => x.ClubId == clubId && x.SeasonId == season.Id))
+                    var tuple = GetPlayerInfoById(playerId);
+                    try
                     {
-                        Console.WriteLine($"Клуб {clubId} привязываем к сезону {season.Id}");
-                        var clubSeason = new FootballClubSeason() { ClubId = clubId, SeasonId = season.Id };
-                        db.ClubsSeasons.Add(clubSeason);
+                        db.Players.Add(tuple.player);
+                        FootballClubPlayer clubPlayer = new FootballClubPlayer { ClubId = tuple.clubId, PlayerId = playerId };
+                        if (tuple.clubId == null || tuple.clubId == "")
+                        {
+                            Console.WriteLine($"У игрока {playerId} нет клуба.");
+                        }
+                        else if (!db.ClubsPlayers.Contains(clubPlayer))
+                        {
+                            db.ClubsPlayers.Add(clubPlayer);
+                            Console.WriteLine($"Игрок загружен: {playerId} ({db.Players.Count()})");
+                        }
                         db.SaveChanges();
                     }
-                    else
+                    catch (DbUpdateException)
                     {
-                        Console.WriteLine($"Клуб {clubId} уже привязан к сезону {season.Id}");
+                        Console.WriteLine($"Игрок {playerId} играет в клубе {tuple.clubId} которого нет в БД. Исправляем!");
+                        if (tuple.clubId != null)
+                        {
+                            SaveOneClub(tuple.clubId);
+                            Console.WriteLine($"Клуб {tuple.clubId} успешно добавлен");
+                            SaveOnePlayer(playerId);
+                        }
+                    }
+
+                }
+            }
+        }
+
+        public static void SaveCompetitionInfo(string compId)
+        {
+            using (AppContext db = new AppContext())
+            {
+                var tuple = GetCompetitionInfo(compId);
+                if (!db.Competitions.Any(x => x.Id == compId))
+                {
+                    db.Competitions.Add(tuple.comp);
+                }
+                db.SaveChanges();
+                Console.WriteLine($"Добавлено лиг: {db.Competitions.Count()}");
+
+                foreach (var seasonYear in tuple.seasonsYear)
+                {
+                    if (!db.Seasons.Any(x => x.CompetitionId == compId && x.Year == seasonYear))
+                    {
+                        Season season = new Season
+                        {
+                            Year = seasonYear,
+                            CompetitionId = compId
+                        };
+                        db.Seasons.Add(season);
                     }
                 }
-                catch (DbUpdateException)
+                db.SaveChanges();
+                Console.WriteLine($"Добавлено сезонов: {db.Seasons.Count()}");
+            }
+        }
+
+        public static void SaveOneSeasonPlayerStatistics(Season season)
+        {
+            using (AppContext db = new AppContext())
+            {
+                var c = new SqlCommand();
+                c.CommandTimeout = 0;
+                var playerStatistics = GetSeasonPlayerStatisticsById(season.CompetitionId, season.Id, season.Year);
+                db.PlayerStatistics.AddRange(playerStatistics);
+                db.SaveChanges();
+                Console.WriteLine($"Добавлено строк статистики игроков: {db.PlayerStatistics.Count()}");
+            }
+        }
+
+        public static void SaveOneSeasonCompetitionTable(Season season)
+        {
+            using (AppContext db = new AppContext())
+            {
+                var c = new SqlCommand();
+                c.CommandTimeout = 0;
+                var table = GetCompetitionTableById(season.CompetitionId, season.Id, season.Year);
+                if (table != null)
                 {
-                    if(!db.ClubsSeasons.Any(x => x.ClubId == clubId))
+                    db.CompetitionTable.AddRange(table);
+                }
+                db.SaveChanges();
+                Console.WriteLine($"Добавлено строк турнирных таблиц: {db.CompetitionTable.Count()}");
+            }
+        }
+
+        public static void SaveOneSeasonClubsId(Season season)
+        {
+            using (AppContext db = new AppContext())
+            {
+                var clubsId = GetClubsIdInLeague(season.CompetitionId, season.Year);
+                foreach (var clubId in clubsId)
+                {
+                    try
                     {
-                        Console.WriteLine($"Клуба {clubId} нет в БД. Исправляем.");
-                        var clubInfo = GetClubInfoByIdAsync(clubId).GetAwaiter().GetResult();
-                        db.Clubs.Add(clubInfo);
-                        db.SaveChanges();
-                        Console.WriteLine($"Связь между клубом {clubId} и сезоном {season.Id} была установлена.");
-                    }                 
+                        if (!db.ClubsSeasons.Any(x => x.ClubId == clubId && x.SeasonId == season.Id))
+                        {
+                            Console.WriteLine($"Клуб {clubId} привязываем к сезону {season.Id}");
+                            var clubSeason = new FootballClubSeason() { ClubId = clubId, SeasonId = season.Id };
+                            db.ClubsSeasons.Add(clubSeason);
+                            db.SaveChanges();
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Клуб {clubId} уже привязан к сезону {season.Id}");
+                        }
+                    }
+                    catch (DbUpdateException)
+                    {
+                        if (!db.ClubsSeasons.Any(x => x.ClubId == clubId))
+                        {
+                            Console.WriteLine($"Клуба {clubId} нет в БД. Исправляем.");
+                            var clubInfo = GetClubInfoById(clubId);
+                            db.Clubs.Add(clubInfo);
+                            try
+                            {
+                                db.SaveChanges();
+                            }
+                            catch (SqlException)
+                            {
+                                Console.WriteLine($"Клуб {clubId} уже есть в БД");
+                            }
+                            Console.WriteLine($"Связь между клубом {clubId} и сезоном {season.Id} была установлена.");
+                        }
+                    }
                 }
             }
-        }
 
-        public static async Task SaveOneSeasonClubsIdAsync(Season season, AppContext db)
-        {
-            await Task.Run(() => SaveOneSeasonClubsId(season, db));
-        }
-
-        public static async Task SaveSeasonsClubsIdAsync(AppContext db)
-        {
-            var seasons = db.Seasons.ToArray();
-            foreach (var season in seasons)
-            {
-                await SaveOneSeasonClubsIdAsync(season, db);
-            }
         }
 
         public static List<string> GetMainCompsId(int page = 1)
@@ -648,11 +850,11 @@ namespace lesson1
             return compsId;
         }
 
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            SaveDB(new List<string> { "13" });
+            SaveDB(new List<string> { "12", "13", "14", "15", "16", "17", "18" });
             stopwatch.Stop();
             TimeSpan ts = stopwatch.Elapsed;
             string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
@@ -683,7 +885,7 @@ namespace lesson1
         public Competition Competition { get; set; }
         public List<PlayerStatistics> PlayerStatistics { get; set; }
 
-        //public List<CompetitionTable> Table { get; set; } = new List<CompetitionTable>();
+        public List<CompetitionTable> Table { get; set; } = new List<CompetitionTable>();
         public List<FootballClubSeason> ClubsSeasons { get; set; } = new List<FootballClubSeason>();
     }
 
@@ -717,20 +919,20 @@ namespace lesson1
         public int RedCards { get; set; }
         public int FairPlayScore { get; set; }
     }
-    [NotMapped]
     class CompetitionTable
     {
-        public string Id { get; set; }
+        public int Id { get; set; }
 
         public string GroupName { get; set; }
 
-        public string CompetitionSeasonId { get; set; }
-        [ForeignKey("CompetitionSeasonId")]
-        public Season CompetitionSeason { get; set; }
+        public int SeasonId { get; set; }
+        [ForeignKey("SeasonId")]
+        public Season Season { get; set; }
 
         public int Position { get; set; }
 
         public string ClubId { get; set; }
+
         [ForeignKey("ClubId")]
         public FootballClub Club { get; set; }
 
@@ -760,7 +962,7 @@ namespace lesson1
         public List<FootballClubPlayer> ClubPlayer { get; set; } = new List<FootballClubPlayer>();
         public List<FootballClubSeason> ClubsSeasons { get; set; } = new List<FootballClubSeason>();
     }
-    [NotMapped]
+
     class FootballClubSeason
     {
         public string ClubId { get; set; }
@@ -802,12 +1004,19 @@ namespace lesson1
     class AppContext : DbContext
     {
         public DbSet<Competition> Competitions { get; set; }
+
         public DbSet<Season> Seasons { get; set; }
+
         public DbSet<PlayerStatistics> PlayerStatistics { get; set; }
-        //public DbSet<CompetitionTable> CompetitionTable { get; set; }
+
+        public DbSet<CompetitionTable> CompetitionTable { get; set; }
+
         public DbSet<FootballClubSeason> ClubsSeasons { get; set; }
+
         public DbSet<FootballClub> Clubs { get; set; }
+
         public DbSet<Player> Players { get; set; }
+
         public DbSet<FootballClubPlayer> ClubsPlayers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
