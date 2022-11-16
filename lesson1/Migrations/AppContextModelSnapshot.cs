@@ -27,6 +27,9 @@ namespace lesson1.Migrations
                     b.Property<string>("Country")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImgSource")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
@@ -104,6 +107,9 @@ namespace lesson1.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImgSource")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("MainCoach")
                         .HasColumnType("nvarchar(max)");
 
@@ -125,21 +131,6 @@ namespace lesson1.Migrations
                     b.ToTable("Clubs");
                 });
 
-            modelBuilder.Entity("lesson1.FootballClubPlayer", b =>
-                {
-                    b.Property<string>("ClubId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("PlayerId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("ClubId", "PlayerId");
-
-                    b.HasIndex("PlayerId");
-
-                    b.ToTable("ClubsPlayers");
-                });
-
             modelBuilder.Entity("lesson1.FootballClubSeason", b =>
                 {
                     b.Property<string>("ClubId")
@@ -155,7 +146,7 @@ namespace lesson1.Migrations
                     b.ToTable("ClubsSeasons");
                 });
 
-            modelBuilder.Entity("lesson1.Player", b =>
+            modelBuilder.Entity("lesson1.Model.Player", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -172,11 +163,11 @@ namespace lesson1.Migrations
                     b.Property<int?>("Height")
                         .HasColumnType("int");
 
-                    b.Property<string>("LastName")
+                    b.Property<string>("ImgSource")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("Number")
-                        .HasColumnType("int");
+                    b.Property<string>("LastName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OriginalName")
                         .HasColumnType("nvarchar(max)");
@@ -229,10 +220,16 @@ namespace lesson1.Migrations
                     b.Property<int>("HatTricks")
                         .HasColumnType("int");
 
+                    b.Property<string>("Label")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Matches")
                         .HasColumnType("int");
 
                     b.Property<int>("Minutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Number")
                         .HasColumnType("int");
 
                     b.Property<int>("PenGoals")
@@ -301,25 +298,6 @@ namespace lesson1.Migrations
                     b.Navigation("Season");
                 });
 
-            modelBuilder.Entity("lesson1.FootballClubPlayer", b =>
-                {
-                    b.HasOne("lesson1.FootballClub", "Club")
-                        .WithMany("ClubPlayer")
-                        .HasForeignKey("ClubId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("lesson1.Player", "Player")
-                        .WithMany("ClubPlayer")
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Club");
-
-                    b.Navigation("Player");
-                });
-
             modelBuilder.Entity("lesson1.FootballClubSeason", b =>
                 {
                     b.HasOne("lesson1.FootballClub", "Club")
@@ -345,7 +323,7 @@ namespace lesson1.Migrations
                         .WithMany()
                         .HasForeignKey("ClubId");
 
-                    b.HasOne("lesson1.Player", "PlayerName")
+                    b.HasOne("lesson1.Model.Player", "PlayerName")
                         .WithMany("PlayerStatistics")
                         .HasForeignKey("PlayerId");
 
@@ -378,15 +356,11 @@ namespace lesson1.Migrations
 
             modelBuilder.Entity("lesson1.FootballClub", b =>
                 {
-                    b.Navigation("ClubPlayer");
-
                     b.Navigation("ClubsSeasons");
                 });
 
-            modelBuilder.Entity("lesson1.Player", b =>
+            modelBuilder.Entity("lesson1.Model.Player", b =>
                 {
-                    b.Navigation("ClubPlayer");
-
                     b.Navigation("PlayerStatistics");
                 });
 

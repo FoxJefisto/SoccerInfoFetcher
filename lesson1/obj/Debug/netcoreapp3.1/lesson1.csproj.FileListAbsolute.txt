@@ -34,7 +34,6 @@ D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\bin\Debug\netcoreapp3.1\Sys
 D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\bin\Debug\netcoreapp3.1\System.Security.Cryptography.ProtectedData.dll
 D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\bin\Debug\netcoreapp3.1\System.Security.Permissions.dll
 D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\bin\Debug\netcoreapp3.1\runtimes\win\lib\netstandard2.0\System.Security.Cryptography.ProtectedData.dll
-D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\obj\Debug\netcoreapp3.1\lesson1.csprojAssemblyReference.cache
 D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\obj\Debug\netcoreapp3.1\lesson1.AssemblyInfoInputs.cache
 D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\obj\Debug\netcoreapp3.1\lesson1.AssemblyInfo.cs
 D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\obj\Debug\netcoreapp3.1\lesson1.csproj.CoreCompileInputs.cache
@@ -63,3 +62,5 @@ D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\bin\Debug\netcoreapp3.1\run
 D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\bin\Debug\netcoreapp3.1\runtimes\win\lib\netstandard2.0\System.Runtime.Caching.dll
 D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Windows.Extensions.dll
 D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\bin\Debug\netcoreapp3.1\HtmlAgilityPack.dll
+D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\obj\Debug\netcoreapp3.1\lesson1.csproj.AssemblyReference.cache
+D:\VisualProjects\C#\EntityFramework\lesson1\lesson1\obj\Debug\netcoreapp3.1\lesson1.GeneratedMSBuildEditorConfig.editorconfig
