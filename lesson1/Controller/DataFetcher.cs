@@ -548,9 +548,9 @@ namespace lesson1.Controller
             return table;
         }
 
-        public async Task<(List<string> playersId, List<string> clubsId)> GetAllPlayersAndClubsIdAsync(Season[] seasons)
+        public async Task<(List<string> playersId, List<string> clubsId)> GetAllPlayersAndClubsIdAsync(List<Season> seasons)
         {
-            var tasks = new Task<(List<string> playersId, List<string> clubsId)>[seasons.Length];
+            var tasks = new Task<(List<string> playersId, List<string> clubsId)>[seasons.Count];
             int i = 0;
             foreach (var season in seasons)
             {

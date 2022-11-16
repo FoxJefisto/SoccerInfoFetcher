@@ -6,12 +6,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using FootballTracker.Controllers;
 
 namespace lesson1.Controller
 {
     class DatabaseLoader
     {
         private static DatabaseLoader instance;
+        public DatabaseManager dbManager;
         public DataFetcher dataFetcher;
         public int clubsExpectedLength;
         public int playersExpectedLength;
@@ -25,13 +27,8 @@ namespace lesson1.Controller
             return instance;
         }
 
-        public void LoadStatistics(List<string> compsId)
+        public void LoadStatistics(List<Season> seasons)
         {
-            Season[] seasons;
-            using (AppContext db = new AppContext())
-            {
-                seasons = db.Seasons.ToArray();
-            }
             LoadSeasonsPlayerStatisticsAsync(seasons).GetAwaiter().GetResult();
             LoadSeasonsCompetitionTableAsync(seasons).GetAwaiter().GetResult();
         }
@@ -56,25 +53,31 @@ namespace lesson1.Controller
             }
         }
 
-        public void LoadPlayersAndClubsInfo(List<string> compsId)
+        public void LoadNewDataByCompetitionId(List<string> compsId)
         {
-            Console.WriteLine("Загрузка турниров...");
-            LoadCompetitionsInfoAsync(compsId).GetAwaiter().GetResult();
-            Season[] seasons;
-            using (AppContext db = new AppContext())
-            {
-                seasons = db.Seasons.ToArray();
-            }
-            Console.WriteLine($"Сбор всех игроков и клубов с {seasons.Length} сезонов...");
-            var tuple = dataFetcher.GetAllPlayersAndClubsIdAsync(seasons).GetAwaiter().GetResult();
+            LoadCompetitionInfo(compsId);
+            var seasons = dbManager.GetSeasonsByCompetitionsId(compsId);
+            LoadPlayersAndClubsInfo(seasons);
+            LoadStatistics(seasons);
+        }
 
+        public void UpdateData()
+        {
+            var seasons = dbManager.GetCurrentSeasons();
+            LoadPlayersAndClubsInfo(seasons);
+            LoadStatistics(seasons);
+        }
+
+        public void LoadPlayersAndClubsInfo(List<Season> seasons)
+        {
+            Console.WriteLine($"Загрузка всех игроков и клубов с {seasons.Count} сезонов...");
+            var tuple = dataFetcher.GetAllPlayersAndClubsIdAsync(seasons).GetAwaiter().GetResult();
             Console.WriteLine("Фильтрация клубов...");
             var unloadedClubsId = FilterClubsId(tuple.clubsId);
             Console.WriteLine("Фильтрация игроков...");
             var unloadedPlayersId = FilterPlayersId(tuple.playersId);
             Console.WriteLine($"Количество незагруженных клубов: {unloadedClubsId.Length}");
             Console.WriteLine($"Количество незагруженных игроков: {unloadedPlayersId.Length}");
-
             Console.WriteLine($"Сохранение {unloadedClubsId.Length} клубов...");
             LoadClubsAsync(unloadedClubsId.Where(x => x != null).ToArray()).GetAwaiter().GetResult();
             Console.WriteLine($"Сохранение {unloadedPlayersId.Length} игроков...");
@@ -93,6 +96,12 @@ namespace lesson1.Controller
                 i++;
             }
             await Task.WhenAll(tasks);
+        }
+
+        public void LoadCompetitionInfo(List<string> compsId)
+        {
+            Console.WriteLine("Загрузка турниров");
+            LoadCompetitionsInfoAsync(compsId).GetAwaiter().GetResult();
         }
 
         public async Task LoadOneCompetitionInfoAsync(string compId)
@@ -136,9 +145,9 @@ namespace lesson1.Controller
             await Task.Run(() => LoadOnePlayer(playerId));
         }
 
-        public async Task LoadSeasonsClubsIdAsync(Season[] seasons)
+        public async Task LoadSeasonsClubsIdAsync(List<Season> seasons)
         {
-            Task[] tasks = new Task[seasons.Length];
+            Task[] tasks = new Task[seasons.Count];
             int i = 0;
             foreach (var season in seasons)
             {
@@ -154,9 +163,9 @@ namespace lesson1.Controller
             await Task.Run(() => LoadOneSeasonClubsId(season));
         }
 
-        public async Task LoadSeasonsPlayerStatisticsAsync(Season[] seasons)
+        public async Task LoadSeasonsPlayerStatisticsAsync(List<Season> seasons)
         {
-            Task[] tasks = new Task[seasons.Length];
+            Task[] tasks = new Task[seasons.Count];
             int i = 0;
             foreach (var season in seasons)
             {
@@ -172,9 +181,9 @@ namespace lesson1.Controller
             await Task.Run(() => LoadOneSeasonPlayerStatistics(season));
         }
 
-        public async Task LoadSeasonsCompetitionTableAsync(Season[] seasons)
+        public async Task LoadSeasonsCompetitionTableAsync(List<Season> seasons)
         {
-            Task[] tasks = new Task[seasons.Length];
+            Task[] tasks = new Task[seasons.Count];
             int i = 0;
             foreach (var season in seasons)
             {
@@ -258,6 +267,8 @@ namespace lesson1.Controller
         {
             using (AppContext db = new AppContext())
             {
+                var c = new SqlCommand();
+                c.CommandTimeout = 0;
                 db.PlayerStatistics.RemoveRange(db.PlayerStatistics.Where(x => x.SeasonId == season.Id));
                 Console.WriteLine($"Старая таблица статистики игроков сезона {season.Id} {season.Year} успешно удалена. Всего: {db.PlayerStatistics.Count()}");
                 var playerStatistics = dataFetcher.GetSeasonPlayerStatisticsById(season.CompetitionId, season.Id, season.Year);
@@ -271,6 +282,8 @@ namespace lesson1.Controller
         {
             using (AppContext db = new AppContext())
             {
+                var c = new SqlCommand();
+                c.CommandTimeout = 0;
                 var table = dataFetcher.GetCompetitionTableById(season.CompetitionId, season.Id, season.Year);
                 foreach (var row in table)
                 {
@@ -285,14 +298,22 @@ namespace lesson1.Controller
                             Console.WriteLine($"Клуб {row.ClubId} успешно загружен. Всего: {db.Clubs.Count()}");
                         }
                         db.CompetitionTable.Add(row);
-                        db.SaveChanges();
+                        try
+                        {
+                            db.SaveChanges();
+                        }
+                        catch (Exception) { }
                         Console.WriteLine($"Строка турнирной таблицы клуба {row.ClubId} успешно загружена. Всего: {db.CompetitionTable.Count()}");
                     }
                     else
                     {
                         row.Id = result.Id;
                         db.Entry(result).CurrentValues.SetValues(row);
-                        db.SaveChanges();
+                        try
+                        {
+                            db.SaveChanges();
+                        }
+                        catch (Exception) { }
                         Console.WriteLine($"Строка турнирной таблицы клуба {row.ClubId} успешно обновлена.");
                     }
                 }
@@ -303,7 +324,7 @@ namespace lesson1.Controller
         {
             using (AppContext db = new AppContext())
             {
-                var clubsId = dataFetcher.GetClubsIdInLeague(season.CompetitionId, season.Year);
+                var clubsId = dataFetcher.GetClubsIdInLeague(season.CompetitionId, season.Year).Distinct();
                 foreach (var clubId in clubsId)
                 {
                     if (!db.ClubsSeasons.Any(x => x.ClubId == clubId && x.SeasonId == season.Id))
@@ -314,10 +335,19 @@ namespace lesson1.Controller
                             var clubInfo = dataFetcher.GetClubInfoById(clubId);
                             db.Clubs.Add(clubInfo);
                             Console.WriteLine($"Клуб {clubId} успешно загружен. Всего: {db.Clubs.Count()}");
+                            try
+                            {
+                                db.SaveChanges();
+                            }
+                            catch (Exception) { }
                         }
                         var clubSeason = new FootballClubSeason() { ClubId = clubId, SeasonId = season.Id };
                         db.ClubsSeasons.Add(clubSeason);
-                        db.SaveChanges();
+                        try
+                        {
+                            db.SaveChanges();
+                        }
+                        catch(Exception) { }
                         Console.WriteLine($"Клуб {clubId} успешно привязан к сезону {season.Id}");
                     }
                 }
@@ -327,6 +357,7 @@ namespace lesson1.Controller
         private DatabaseLoader()
         {
             dataFetcher = DataFetcher.GetInstance();
+            dbManager = DatabaseManager.GetInstance();
         }
     }
 }

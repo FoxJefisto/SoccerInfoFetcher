@@ -1,4 +1,5 @@
-﻿using lesson1.Controller;
+﻿using FootballTracker.Controllers;
+using lesson1.Controller;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
@@ -25,9 +26,8 @@ namespace lesson1
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             DatabaseLoader dbLoader = DatabaseLoader.GetInstance();
-            var comps = new List<string>() { "12", "13", "14", "15", "16", "17", "18", "19", "742", "739", "741", "736", "738", "740", "737", "20", "2032", "687" };
-            //dbLoader.LoadPlayersAndClubsInfo(comps);
-            dbLoader.LoadStatistics(comps);
+            var comps = new List<string>() { "786", "681", "723", "1658", "596", "485" };
+            dbLoader.LoadNewDataByCompetitionId(comps);
             stopwatch.Stop();
             TimeSpan ts = stopwatch.Elapsed;
             string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
