@@ -19,6 +19,15 @@ namespace lesson1
 
         public DbSet<Player> Players { get; set; }
 
+        public DbSet<FootballMatch> Matches { get; set; }
+
+        public DbSet<MatchStatistics> MatchStatistics { get; set; }
+
+        public DbSet<MatchEvent> MatchEvents { get; set; }
+
+        public DbSet<MatchSquadPlayers> MatchSquad { get; set; }
+        public DbSet<UpdateInfo> UpdateInfo { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS; DATABASE=SoccerDB; Trusted_Connection=True");

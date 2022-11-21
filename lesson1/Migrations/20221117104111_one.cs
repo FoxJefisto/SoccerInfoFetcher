@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace lesson1.Migrations
 {
-    public partial class initial : Migration
+    public partial class one : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -145,6 +145,27 @@ namespace lesson1.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Matches",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Label = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Stage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SeasonId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Matches", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Matches_Seasons_SeasonId",
+                        column: x => x.SeasonId,
+                        principalTable: "Seasons",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PlayerStatistics",
                 columns: table => new
                 {
@@ -152,6 +173,7 @@ namespace lesson1.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SeasonId = table.Column<int>(type: "int", nullable: false),
                     PlayerId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    Label = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Number = table.Column<int>(type: "int", nullable: true),
                     ClubId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Goals = table.Column<int>(type: "int", nullable: false),
@@ -191,6 +213,53 @@ namespace lesson1.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "MatchStatistics",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MatchId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    ClubId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    HomeAway = table.Column<byte>(type: "tinyint", nullable: false),
+                    Goals = table.Column<int>(type: "int", nullable: false),
+                    Xg = table.Column<double>(type: "float", nullable: false),
+                    Shots = table.Column<int>(type: "int", nullable: false),
+                    ShotsOnTarget = table.Column<int>(type: "int", nullable: false),
+                    ShotsBlocked = table.Column<int>(type: "int", nullable: false),
+                    Saves = table.Column<int>(type: "int", nullable: false),
+                    BallPossession = table.Column<int>(type: "int", nullable: false),
+                    Corners = table.Column<int>(type: "int", nullable: false),
+                    Fouls = table.Column<int>(type: "int", nullable: false),
+                    Offsides = table.Column<int>(type: "int", nullable: false),
+                    YCards = table.Column<int>(type: "int", nullable: false),
+                    RCards = table.Column<int>(type: "int", nullable: false),
+                    Attacks = table.Column<int>(type: "int", nullable: false),
+                    AttacksDangerous = table.Column<int>(type: "int", nullable: false),
+                    Passes = table.Column<int>(type: "int", nullable: false),
+                    AccPasses = table.Column<double>(type: "float", nullable: false),
+                    FreeKicks = table.Column<int>(type: "int", nullable: false),
+                    Prowing = table.Column<int>(type: "int", nullable: false),
+                    Crosses = table.Column<int>(type: "int", nullable: false),
+                    Tackles = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MatchStatistics", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MatchStatistics_Clubs_ClubId",
+                        column: x => x.ClubId,
+                        principalTable: "Clubs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MatchStatistics_Matches_MatchId",
+                        column: x => x.MatchId,
+                        principalTable: "Matches",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_ClubsSeasons_SeasonId",
                 table: "ClubsSeasons",
@@ -205,6 +274,21 @@ namespace lesson1.Migrations
                 name: "IX_CompetitionTable_SeasonId",
                 table: "CompetitionTable",
                 column: "SeasonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Matches_SeasonId",
+                table: "Matches",
+                column: "SeasonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MatchStatistics_ClubId",
+                table: "MatchStatistics",
+                column: "ClubId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MatchStatistics_MatchId",
+                table: "MatchStatistics",
+                column: "MatchId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PlayerStatistics_ClubId",
@@ -236,7 +320,13 @@ namespace lesson1.Migrations
                 name: "CompetitionTable");
 
             migrationBuilder.DropTable(
+                name: "MatchStatistics");
+
+            migrationBuilder.DropTable(
                 name: "PlayerStatistics");
+
+            migrationBuilder.DropTable(
+                name: "Matches");
 
             migrationBuilder.DropTable(
                 name: "Clubs");

@@ -2,21 +2,22 @@
 
 namespace lesson1.Migrations
 {
-    public partial class second : Migration
+    public partial class addIsZero : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Label",
+            migrationBuilder.AddColumn<bool>(
+                name: "IsZero",
                 table: "PlayerStatistics",
-                type: "nvarchar(max)",
-                nullable: true);
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Label",
+                name: "IsZero",
                 table: "PlayerStatistics");
         }
     }

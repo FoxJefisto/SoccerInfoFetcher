@@ -22,7 +22,6 @@ namespace lesson1
         public string ClubId { get; set; }
         [ForeignKey("ClubId")]
         public FootballClub Club { get; set; }
-
         public int Goals { get; set; }
         public int Assists { get; set; }
         public int Matches { get; set; }
@@ -31,7 +30,7 @@ namespace lesson1
         public int PenGoals { get; set; }
         public int DoubleGoals { get; set; }
         public int HatTricks { get; set; }
-        public int AutoGoals { get; set; }
+        public int OwnGoals { get; set; }
         public int YellowCards { get; set; }
         public int YellowRedCards { get; set; }
         public int RedCards { get; set; }

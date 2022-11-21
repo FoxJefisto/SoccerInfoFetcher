@@ -10,8 +10,8 @@ using lesson1;
 namespace lesson1.Migrations
 {
     [DbContext(typeof(AppContext))]
-    [Migration("20221116134150_second")]
-    partial class second
+    [Migration("20221119165100_addsquad")]
+    partial class addsquad
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -148,6 +148,183 @@ namespace lesson1.Migrations
                     b.ToTable("ClubsSeasons");
                 });
 
+            modelBuilder.Entity("lesson1.Model.FootballMatch", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Label")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SeasonId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Stage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeasonId");
+
+                    b.ToTable("Matches");
+                });
+
+            modelBuilder.Entity("lesson1.Model.MatchEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Label")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Minute")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PlayerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("StatisticsId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlayerId");
+
+                    b.HasIndex("StatisticsId");
+
+                    b.ToTable("MatchEvents");
+                });
+
+            modelBuilder.Entity("lesson1.Model.MatchSquadPlayers", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<bool>("IsCaptain")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Label")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Number")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PlayerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("StatisticsId")
+                        .HasColumnType("int");
+
+                    b.Property<byte>("Type")
+                        .HasColumnType("tinyint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlayerId");
+
+                    b.HasIndex("StatisticsId");
+
+                    b.ToTable("MatchSquad");
+                });
+
+            modelBuilder.Entity("lesson1.Model.MatchStatistics", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<double?>("AccPasses")
+                        .HasColumnType("float");
+
+                    b.Property<int?>("Attacks")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AttacksDangerous")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BallPossession")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ClubId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("Corners")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Crosses")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Fouls")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FreeKicks")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Goals")
+                        .HasColumnType("int");
+
+                    b.Property<byte>("HomeAway")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("MatchId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("Offsides")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Passes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Prowing")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RCards")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Saves")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Shots")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ShotsBlocked")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ShotsOnTarget")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Tackles")
+                        .HasColumnType("int");
+
+                    b.Property<double?>("Xg")
+                        .HasColumnType("float");
+
+                    b.Property<int?>("YCards")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubId");
+
+                    b.HasIndex("MatchId");
+
+                    b.ToTable("MatchStatistics");
+                });
+
             modelBuilder.Entity("lesson1.Model.Player", b =>
                 {
                     b.Property<string>("Id")
@@ -201,9 +378,6 @@ namespace lesson1.Migrations
                     b.Property<int>("Assists")
                         .HasColumnType("int");
 
-                    b.Property<int>("AutoGoals")
-                        .HasColumnType("int");
-
                     b.Property<string>("ClubId")
                         .HasColumnType("nvarchar(450)");
 
@@ -232,6 +406,9 @@ namespace lesson1.Migrations
                         .HasColumnType("int");
 
                     b.Property<int?>("Number")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OwnGoals")
                         .HasColumnType("int");
 
                     b.Property<int>("PenGoals")
@@ -319,6 +496,66 @@ namespace lesson1.Migrations
                     b.Navigation("Season");
                 });
 
+            modelBuilder.Entity("lesson1.Model.FootballMatch", b =>
+                {
+                    b.HasOne("lesson1.Season", "Season")
+                        .WithMany("Matches")
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Season");
+                });
+
+            modelBuilder.Entity("lesson1.Model.MatchEvent", b =>
+                {
+                    b.HasOne("lesson1.Model.Player", "Player")
+                        .WithMany()
+                        .HasForeignKey("PlayerId");
+
+                    b.HasOne("lesson1.Model.MatchStatistics", "Statistics")
+                        .WithMany("Events")
+                        .HasForeignKey("StatisticsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Player");
+
+                    b.Navigation("Statistics");
+                });
+
+            modelBuilder.Entity("lesson1.Model.MatchSquadPlayers", b =>
+                {
+                    b.HasOne("lesson1.Model.Player", "Player")
+                        .WithMany()
+                        .HasForeignKey("PlayerId");
+
+                    b.HasOne("lesson1.Model.MatchStatistics", "Statistics")
+                        .WithMany("Squad")
+                        .HasForeignKey("StatisticsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Player");
+
+                    b.Navigation("Statistics");
+                });
+
+            modelBuilder.Entity("lesson1.Model.MatchStatistics", b =>
+                {
+                    b.HasOne("lesson1.FootballClub", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId");
+
+                    b.HasOne("lesson1.Model.FootballMatch", "Match")
+                        .WithMany("Statistics")
+                        .HasForeignKey("MatchId");
+
+                    b.Navigation("Club");
+
+                    b.Navigation("Match");
+                });
+
             modelBuilder.Entity("lesson1.PlayerStatistics", b =>
                 {
                     b.HasOne("lesson1.FootballClub", "Club")
@@ -361,6 +598,18 @@ namespace lesson1.Migrations
                     b.Navigation("ClubsSeasons");
                 });
 
+            modelBuilder.Entity("lesson1.Model.FootballMatch", b =>
+                {
+                    b.Navigation("Statistics");
+                });
+
+            modelBuilder.Entity("lesson1.Model.MatchStatistics", b =>
+                {
+                    b.Navigation("Events");
+
+                    b.Navigation("Squad");
+                });
+
             modelBuilder.Entity("lesson1.Model.Player", b =>
                 {
                     b.Navigation("PlayerStatistics");
@@ -369,6 +618,8 @@ namespace lesson1.Migrations
             modelBuilder.Entity("lesson1.Season", b =>
                 {
                     b.Navigation("ClubsSeasons");
+
+                    b.Navigation("Matches");
 
                     b.Navigation("PlayerStatistics");
 
